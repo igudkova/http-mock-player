@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpMockReq", "HttpMockReq.csproj", "{CAA76A91-ABA0-4CA5-85E8-447441D7977C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpMockReq.Tests", "..\HttpMockReq.Tests\HttpMockReq.Tests.csproj", "{79049883-8EDA-4B9B-8291-34B5A6D0CB9B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpMockReq.Samples", "..\HttpMockReq.Samples\HttpMockReq.Samples.csproj", "{3E83FACD-6326-427A-B947-3E0E1487D9F6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CAA76A91-ABA0-4CA5-85E8-447441D7977C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CAA76A91-ABA0-4CA5-85E8-447441D7977C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CAA76A91-ABA0-4CA5-85E8-447441D7977C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CAA76A91-ABA0-4CA5-85E8-447441D7977C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79049883-8EDA-4B9B-8291-34B5A6D0CB9B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79049883-8EDA-4B9B-8291-34B5A6D0CB9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79049883-8EDA-4B9B-8291-34B5A6D0CB9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79049883-8EDA-4B9B-8291-34B5A6D0CB9B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E83FACD-6326-427A-B947-3E0E1487D9F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E83FACD-6326-427A-B947-3E0E1487D9F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E83FACD-6326-427A-B947-3E0E1487D9F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E83FACD-6326-427A-B947-3E0E1487D9F6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
