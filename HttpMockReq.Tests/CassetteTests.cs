@@ -4,12 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HttpMockReq.Samples
+namespace HttpMockReq.Tests
 {
-    class Program
+    class CassetteTests
     {
-        static void Main(string[] args)
-        {
-        }
+        //creates file if not found
     }
 }

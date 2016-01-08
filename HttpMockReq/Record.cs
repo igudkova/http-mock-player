@@ -2,14 +2,14 @@
 
 namespace HttpMockReq
 {
-    class Record
+    public class Record
     {
-        private string name;
+        public string Name;
         public readonly Queue Queue;
 
         public Record(string name, Queue queue)
         {
-            this.name = name;
+            this.Name = name;
             this.Queue = queue;
         }
     }

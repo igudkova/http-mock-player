@@ -8,23 +8,69 @@ using System.Threading.Tasks;
 
 namespace HttpMockReq
 {
-    class Player
+    public class Player
     {
-        private bool isPlaying;
-        private bool isRecording;
-        private string remoteUrl;
+        private Uri baseAddress, remoteAddress;
         private HttpListener httpListener;
         private HttpClient httpClient;
+        private bool isPlaying, isRecording;
         private Queue queue;
         private Cassette cassette;
 
-        public void On(string url = "http://localhost:5555")
+        /// <summary>
+        /// Gets or sets the base address 
+        /// </summary>
+        public Uri BaseAddress
         {
-            httpListener = new HttpListener();
-            httpListener.Prefixes.Add(url.EndsWith("/") ? url : url + "/");
+            get
+            {
+                return baseAddress;
+            }
+            set
+            {
+                if (baseAddress != value)
+                {
+                    baseAddress = value;
+
+                    if(httpListener == null)
+                    {
+                        httpListener = new HttpListener();
+                    }
+                    else
+                    {
+                        //can be set after start?
+                    }
+
+                    var baseAddressString = baseAddress.OriginalString;
+                    httpListener.Prefixes.Clear();
+                    httpListener.Prefixes.Add(baseAddressString.EndsWith("/") ? baseAddressString : baseAddressString + "/");
+
+                    //todo reset listener
+                }
+            }
+        }
+
+        public Uri RemoteAddress
+        {
+            get; set;//todo reset client
+        }
+
+        public void Start()
+        {
+            if(baseAddress == null)
+            {
+                throw new InvalidOperationException("Base address is not set.");
+            }
+
             httpListener.Start();
 
-            Task.Factory.StartNew(() =>
+            if (remoteAddress != null)
+            {
+                httpClient = new HttpClient();
+                httpClient.BaseAddress = remoteAddress;
+            }
+
+            Task.Factory.StartNew((Func<Task>)(async () =>
             {
                 while (httpListener.IsListening)
                 {
@@ -47,24 +93,27 @@ namespace HttpMockReq
                         else if(isRecording)
                         {
                             //redirect to live url
-                            //HttpResponseMessage res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Post, requestUri));
-
-                            //create json from request and response
+                            HttpResponseMessage res = await httpClient.SendAsync(new HttpRequestMessage(new HttpMethod(request.HttpMethod), request.Url.PathAndQuery));
+                            string resString = await res.Content.ReadAsStringAsync();
+                            //create json from request and response, incl. baseurl
                             //add to queue
                         }
 
                     }
-                    catch (System.Exception)
+                    catch (Exception ex)
                     {
-                        Off();
+                        this.Stop();
 
                         throw;
                     }
                 }
-            });
+            }));
         }
 
-        public void Off()
+        /// <summary>
+        /// Shuts down the <see cref="Player"/>.
+        /// </summary>
+        public void Close()
         {
             this.Stop();
 
@@ -73,23 +122,11 @@ namespace HttpMockReq
                 httpListener.Stop();
                 httpListener.Close();
             }
-        }
 
-        public void Connect(string remoteUrl)
-        {
-            this.remoteUrl = remoteUrl;
-
-            httpClient = new HttpClient();
-            httpClient.BaseAddress = new Uri(remoteUrl);
-
-        }
-
-        public void Disconnect()
-        {
-            httpClient.Dispose();
-            httpClient = null;
-
-            remoteUrl = null;
+            if(httpClient != null)
+            {
+                httpClient.Dispose();
+            }
         }
 
         public void Load(Cassette cassette)
@@ -167,6 +204,23 @@ namespace HttpMockReq
 
         public void Record(string name)
         {
+            if (isPlaying)
+            {
+                throw new InvalidOperationException("Player is already playing.");
+            }
+            if (isRecording)
+            {
+                throw new InvalidOperationException("Player is already recording.");
+            }
+            if (cassette == null)
+            {
+                throw new InvalidOperationException("Cassette is not loaded.");
+            }
+            //if remoteaddr null
+            //if httpclient null = diconnected
+
+            isRecording = true;
+
         }
 
         #endregion
@@ -176,6 +230,9 @@ namespace HttpMockReq
 
         }
 
+        /// <summary>
+        /// Causes the player to stop playing or recording requests.
+        /// </summary>
         public void Stop()
         {
             if (isPlaying)

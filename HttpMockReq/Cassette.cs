@@ -1,6 +1,8 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Collections;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace HttpMockReq
@@ -8,9 +10,9 @@ namespace HttpMockReq
     /// <summary>
     /// 
     /// </summary>
-    class Cassette
+    public class Cassette
     {
-        private List<Record> records;
+        public List<Record> Records;
 
         /// <summary>
         /// 
@@ -18,22 +20,47 @@ namespace HttpMockReq
         /// <param name="path"></param>
         public Cassette(string path)
         {
-            records = new List<Record>(5);
+            if(path == null)
+            {
+                throw new ArgumentNullException("path");
+            }
+
+            Records = new List<Record>(5);
 
             if (File.Exists(path))
             {
-                foreach (var record in JArray.Parse(File.ReadAllText(path)))
+                var json = File.ReadAllText(path);
+                if(json == string.Empty)
                 {
-                    var name = record["name"].ToString();
-
-                    var queue = new Queue();
-                    foreach (var request in record["requests"])
-                    {
-                        queue.Enqueue(request);
-                    }
-
-                    records.Add(new Record(name, queue));
+                    return;
                 }
+
+                try
+                {
+                    foreach (var record in JArray.Parse(json))
+                    {
+                        var name = record["name"].ToString();
+
+                        var queue = new Queue();
+                        foreach (var request in record["requests"])
+                        {
+                            queue.Enqueue(request);
+                        }
+
+                        Records.Add(new Record(name, queue));
+                    }
+                }
+                catch (JsonReaderException ex)
+                {
+                    throw new InvalidOperationException("Cassette cannot be parsed.", ex);
+                }
+            }
+            else
+            {
+                var directory = Path.GetDirectoryName(path);
+
+                Directory.CreateDirectory(directory);
+                File.Create(path);
             }
         }
 
