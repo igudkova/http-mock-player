@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HttpMockReq.HttpMockReqException;
+using System;
 using System.Collections;
 using System.IO;
 using System.Net;
@@ -8,14 +9,27 @@ using System.Threading.Tasks;
 
 namespace HttpMockReq
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class Player
     {
         private Uri baseAddress, remoteAddress;
         private HttpListener httpListener;
         private HttpClient httpClient;
-        private bool isPlaying, isRecording;
+        private State state;
         private Queue queue;
         private Cassette cassette;
+
+        /// <summary>
+        /// Represents the state of the player.
+        /// </summary>
+        public enum State
+        {
+            Idle,
+            Playing,
+            Recording
+        }
 
         /// <summary>
         /// Gets or sets the base address 
@@ -36,23 +50,34 @@ namespace HttpMockReq
                     {
                         httpListener = new HttpListener();
                     }
-                    else
-                    {
-                        //can be set after start?
-                    }
 
                     var baseAddressString = baseAddress.OriginalString;
                     httpListener.Prefixes.Clear();
                     httpListener.Prefixes.Add(baseAddressString.EndsWith("/") ? baseAddressString : baseAddressString + "/");
-
-                    //todo reset listener
                 }
             }
         }
 
         public Uri RemoteAddress
         {
-            get; set;//todo reset client
+            get
+            {
+                return remoteAddress;
+            }
+            set
+            {
+                if(remoteAddress != value)
+                {
+                    remoteAddress = value;
+
+                    if(httpClient == null)
+                    {
+                        httpClient = new HttpClient();
+                    }
+
+                    httpClient.BaseAddress = remoteAddress;
+                }
+            }
         }
 
         public void Start()
@@ -64,13 +89,7 @@ namespace HttpMockReq
 
             httpListener.Start();
 
-            if (remoteAddress != null)
-            {
-                httpClient = new HttpClient();
-                httpClient.BaseAddress = remoteAddress;
-            }
-
-            Task.Factory.StartNew((Func<Task>)(async () =>
+            Task.Factory.StartNew(async () =>
             {
                 while (httpListener.IsListening)
                 {
@@ -80,34 +99,50 @@ namespace HttpMockReq
                         HttpListenerRequest request = context.Request;
                         HttpListenerResponse response = context.Response;
 
-                        if(isPlaying)
+                        if (state == State.Playing)
                         {
                             dynamic rec = queue.Dequeue();
 
                             if (!VerifyRequestAgainstRecorded(request, rec.request))
                             {
-                                throw new InvalidOperationException(string.Format("Request {0} is not found.", request.Url));
+                                throw new RequestNotFoundException("The processed request doesn't match the recorded one.", request.Url);
                             }
                             BuildResponseFromRecorded(response, rec.response);
                         }
-                        else if(isRecording)
+                        else if (state == State.Recording)
                         {
-                            //redirect to live url
-                            HttpResponseMessage res = await httpClient.SendAsync(new HttpRequestMessage(new HttpMethod(request.HttpMethod), request.Url.PathAndQuery));
+                            var requestMessage = new HttpRequestMessage(new HttpMethod(request.HttpMethod), request.Url.PathAndQuery);
+
+                            foreach (string header in request.Headers.AllKeys)
+                            {
+                                requestMessage.Headers.Add(header, request.Headers[header]);
+                            }
+                            requestMessage.Headers.Host = remoteAddress.Host;
+
+
+                            //foreach (string cookie in request.Cookies)
+                            //{
+                            //    requestMessage.Properties.Add(cookie, request.Cookies[cookie]);
+                            //}
+
+                            HttpResponseMessage res = await httpClient.SendAsync(requestMessage);
                             string resString = await res.Content.ReadAsStringAsync();
                             //create json from request and response, incl. baseurl
                             //add to queue
-                        }
 
+                            Console.WriteLine("recording");
+
+                            httpClient.DefaultRequestHeaders.Clear();
+                        }
                     }
                     catch (Exception ex)
                     {
-                        this.Stop();
+                        Stop();
 
-                        throw;
+                        throw new OperationFailedException(state, "Player couldn't complete the operation.", ex);
                     }
                 }
-            }));
+            });
         }
 
         /// <summary>
@@ -126,6 +161,7 @@ namespace HttpMockReq
             if(httpClient != null)
             {
                 httpClient.Dispose();
+                httpClient = null;
             }
         }
 
@@ -140,8 +176,8 @@ namespace HttpMockReq
         {
             //todo
             bool isMatching = recordedRequest.method == request.HttpMethod &&
-                                                                recordedRequest.path == request.Url.AbsolutePath &&
-                                                                (recordedRequest.query ?? "") == request.Url.Query;
+                              recordedRequest.path == request.Url.AbsolutePath &&
+                              (recordedRequest.query ?? "") == request.Url.Query;
             if (isMatching && recordedRequest.headers != null)
             {
                 foreach (var header in recordedRequest.headers)
@@ -178,24 +214,21 @@ namespace HttpMockReq
             responseStream.Close();
         }
 
-        public void Play(Record record)
+        public void Play(string name)
         {
-            if (isPlaying)
+            if (state != State.Idle)
             {
-                throw new InvalidOperationException("Player is already playing.");
-            }
-            if (isRecording)
-            {
-                throw new InvalidOperationException("Player is already recording.");
+                throw new OperationFailedException(state, "Player is already in operation.");
             }
             if (cassette == null)
             {
                 throw new InvalidOperationException("Cassette is not loaded.");
             }
 
-            isPlaying = true;
-
+            var record = cassette.Records.Find(r => r.Name == name);
             queue = record.Queue;
+
+            state = State.Playing;
         }
 
         #endregion
@@ -204,23 +237,19 @@ namespace HttpMockReq
 
         public void Record(string name)
         {
-            if (isPlaying)
+            if (state != State.Idle)
             {
-                throw new InvalidOperationException("Player is already playing.");
-            }
-            if (isRecording)
-            {
-                throw new InvalidOperationException("Player is already recording.");
+                throw new OperationFailedException(state, "Player is already in operation.");
             }
             if (cassette == null)
             {
                 throw new InvalidOperationException("Cassette is not loaded.");
             }
+
             //if remoteaddr null
             //if httpclient null = diconnected
 
-            isRecording = true;
-
+            state = State.Recording;
         }
 
         #endregion
@@ -235,17 +264,17 @@ namespace HttpMockReq
         /// </summary>
         public void Stop()
         {
-            if (isPlaying)
+            if (state == State.Playing)
             {
-                isPlaying = false;
-
                 queue = null;
             }
-            else if (isRecording)
+            else if (state == State.Recording)
             {
                 //save to file
                 //cassette.Save();
             }
+
+            state = State.Idle;
         }
     }
 }

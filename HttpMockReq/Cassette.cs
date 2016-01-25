@@ -1,9 +1,10 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using HttpMockReq.HttpMockReqException;
 
 namespace HttpMockReq
 {
@@ -12,7 +13,12 @@ namespace HttpMockReq
     /// </summary>
     public class Cassette
     {
-        public List<Record> Records;
+        internal List<Record> Records;
+
+        /// <summary>
+        /// Gets the cassette file path.
+        /// </summary>
+        public string Path { get; }
 
         /// <summary>
         /// 
@@ -25,6 +31,7 @@ namespace HttpMockReq
                 throw new ArgumentNullException("path");
             }
 
+            Path = path;
             Records = new List<Record>(5);
 
             if (File.Exists(path))
@@ -52,16 +59,26 @@ namespace HttpMockReq
                 }
                 catch (JsonReaderException ex)
                 {
-                    throw new InvalidOperationException("Cassette cannot be parsed.", ex);
+                    throw new CassetteException("Cassette cannot be parsed.", path, ex);
                 }
             }
             else
             {
-                var directory = Path.GetDirectoryName(path);
+                var directory = System.IO.Path.GetDirectoryName(path);
 
                 Directory.CreateDirectory(directory);
                 File.Create(path);
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public bool Contains(string name)
+        {
+            return Records.Exists(r => r.Name == name);
         }
 
         internal void Save(Record record)

@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System.Threading.Tasks;
+using NUnit.Framework;
 
 namespace HttpMockReq.Samples
 {
@@ -11,33 +12,40 @@ namespace HttpMockReq.Samples
         [OneTimeSetUp]
         public void SetUp()
         {
-            Tests.Player.Load(new Cassette("../../Tests/Mock/Http/Repo.json"));
+            cassette = new Cassette($"{Tests.AssemblyDirectoryName}/../../Tests/Mock/Http/Repo.json");
+
+            Tests.Player.Load(cassette);
 
             client = new GithubClient(Tests.Player.BaseAddress);
+            //client = new GithubClient(new System.Uri("http://localhost:5555"));
         }
 
-        //[SetUp]
-        //protected void dofirst()
-        //{
-
-        //}
-
-        [Test]
-        public async void CanGetRepos()
+        public void PreTest(string recordName)
         {
-            var record = cassette.Records.Find(r => r.Name == "GetRepos");
-            if(record != null)
+            if (cassette.Contains(recordName))
             {
-                Tests.Player.Play(record);
+                Tests.Player.Play(recordName);
             }
             else
             {
-                Tests.Player.Record("GetRepos");
+                Tests.Player.Record(recordName);
             }
+        }
+
+        public void PostTest()
+        {
+            Tests.Player.Stop();
+        }
+
+        [Test, Description("Successfully retrieves list of repos")]
+        public async Task CanGetRepos()
+        {
+            PreTest("GetRepos");
 
             var repos = await client.GetRepos("igudkova");
+            Assert.IsNotEmpty(repos);
 
-            Tests.Player.Stop();
+            PostTest();
         }
     }
 }

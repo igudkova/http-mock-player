@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace HttpMockReq.Samples
 {
@@ -12,26 +15,29 @@ namespace HttpMockReq.Samples
     {
         private HttpClient httpClient;
 
-        public GithubClient(Uri baseUri)
+        public GithubClient(Uri baseAddress)
         {
             httpClient = new HttpClient();
-            httpClient.BaseAddress = baseUri;
+            httpClient.BaseAddress = baseAddress;
+            httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("SampleGithubClient", "1.0"));
         }
 
         #region Repo
 
-        public async Task<string> GetRepos(string owner)
+        public async Task<List<Repo>> GetRepos(string owner)
         {
-            HttpResponseMessage res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"users/{owner}/repos"));
+            HttpResponseMessage res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"/users/{owner}/repos"));
+            string resString = await res.Content.ReadAsStringAsync();
 
-            return await res.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<List<Repo>>(resString);
         }
 
-        public async Task<string> GetRepo(string owner, string repo)
+        public async Task<Repo> GetRepo(string owner, string repo)
         {
             HttpResponseMessage res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"repos/{owner}/{repo}"));
+            string resString = await res.Content.ReadAsStringAsync();
 
-            return await res.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<Repo>(resString);
         }
 
         public async Task<string> CreateRepo(string repo, string description)
