@@ -1,11 +1,12 @@
-﻿using HttpMockReq.HttpMockReqException;
-using System;
-using System.Collections;
+﻿using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using HttpMockReq.HttpMockReqException;
+using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 
 namespace HttpMockReq
 {
@@ -18,8 +19,8 @@ namespace HttpMockReq
         private HttpListener httpListener;
         private HttpClient httpClient;
         private State state;
-        private Queue queue;
         private Cassette cassette;
+        private Record record;
 
         /// <summary>
         /// Represents the state of the player.
@@ -31,6 +32,96 @@ namespace HttpMockReq
             Recording
         }
 
+        private class MockRequest
+        {
+            public string Method { get; private set; }
+
+            public string Host { get; private set; }
+
+            public string Path { get; private set; }
+
+            public string Body { get; private set; }
+
+            public Dictionary<string, string> Headers { get; private set; }
+
+            public Dictionary<string, Cookie> Cookies { get; private set; }
+
+            public static MockRequest FromHttpRequest(string host, HttpListenerRequest request)
+            {
+                var mockRequest = new MockRequest()
+                {
+                    Method = request.HttpMethod,
+                    Host = host,
+                    Path = request.Url.PathAndQuery
+                };
+
+                if(request.Headers != null)
+                {
+                    mockRequest.Headers = new Dictionary<string, string>();
+
+                    foreach (var header in request.Headers.AllKeys)
+                    {
+                        mockRequest.Headers.Add(header, request.Headers[header]);
+                    }
+                }
+
+                return mockRequest;
+
+                ////foreach (string cookie in request.Cookies)
+                ////{
+                ////    requestMessage.Properties.Add(cookie, request.Cookies[cookie]);
+                ////}
+
+                //requestMessage.Headers.Host = remoteAddress.Host;
+
+            }
+
+            public static MockRequest FromRecordedRequest(JObject recorded)
+            {
+                return recorded.ToObject<MockRequest>();
+            }
+        }
+
+        private class MockResponse
+        {
+            public int StatusCode { get; private set;  }
+
+            public string StatusDescription { get; private set; }
+
+            public string Body { get; private set; }
+
+            public Dictionary<string, string> Headers { get; private set; }
+
+            public MockResponse(int statusCode, string statusDescription, string body)
+            {
+                StatusCode = statusCode;
+                StatusDescription = statusDescription;
+                Body = body;
+            }
+
+            public static async Task<MockResponse> FromHttpResponse(HttpResponseMessage responseMessage)
+            {
+                var mockResponse = new MockResponse((int)responseMessage.StatusCode, responseMessage.ReasonPhrase, await responseMessage.Content.ReadAsStringAsync());
+
+                if (responseMessage.Headers != null)
+                {
+                    mockResponse.Headers = new Dictionary<string, string>();
+
+                    foreach (var header in responseMessage.Headers)
+                    {
+                        mockResponse.Headers.Add(header.Key, header.Value.ToString());
+                    }
+                }
+
+                return mockResponse;
+            }
+
+            public static MockResponse FromRecordedResponse(JObject recorded)
+            {
+                return recorded.ToObject<MockResponse>();
+            }
+        }
+
         /// <summary>
         /// Gets or sets the base address 
         /// </summary>
@@ -38,11 +129,11 @@ namespace HttpMockReq
         {
             get
             {
-                return baseAddress;
+                return baseAddress; // todo: set in constructor only, deck address
             }
             set
             {
-                if (baseAddress != value)
+                if (baseAddress != value) //todo
                 {
                     baseAddress = value;
 
@@ -58,7 +149,7 @@ namespace HttpMockReq
             }
         }
 
-        public Uri RemoteAddress
+        public Uri RemoteAddress 
         {
             get
             {
@@ -84,62 +175,86 @@ namespace HttpMockReq
         {
             if(baseAddress == null)
             {
-                throw new InvalidOperationException("Base address is not set.");
+                throw new InvalidOperationException("Player base address is not set.");
             }
 
             httpListener.Start();
 
-            Task.Factory.StartNew(async () =>
+            Task.Run(async () =>
             {
                 while (httpListener.IsListening)
                 {
+                    HttpListenerContext context = httpListener.GetContext();
+                    HttpListenerRequest request = context.Request;
+                    HttpListenerResponse response = context.Response;
+
                     try
                     {
-                        HttpListenerContext context = httpListener.GetContext();
-                        HttpListenerRequest request = context.Request;
-                        HttpListenerResponse response = context.Response;
-
-                        if (state == State.Playing)
+                        switch (state)
                         {
-                            dynamic rec = queue.Dequeue();
+                            case State.Playing:
+                                dynamic rec = record.Read(); //todo: object of MockRequest
 
-                            if (!VerifyRequestAgainstRecorded(request, rec.request))
-                            {
-                                throw new RequestNotFoundException("The processed request doesn't match the recorded one.", request.Url);
-                            }
-                            BuildResponseFromRecorded(response, rec.response);
-                        }
-                        else if (state == State.Recording)
-                        {
-                            var requestMessage = new HttpRequestMessage(new HttpMethod(request.HttpMethod), request.Url.PathAndQuery);
+                                if (VerifyRequest(request, rec.request))
+                                {
+                                    BuildResponse(response, rec.response);
+                                }
+                                else
+                                {
+                                    BuildResponse(response, new MockResponse(454, "Player request mismatch", $"Player could not play the request at {request.Url}. The request doesn't match the current recorded one."));
+                                }
+                                
+                                break;
+                            case State.Recording:
+                                var mockRequest = MockRequest.FromHttpRequest(remoteAddress.Host, request);
+                                var requestMessage = new HttpRequestMessage();
 
-                            foreach (string header in request.Headers.AllKeys)
-                            {
-                                requestMessage.Headers.Add(header, request.Headers[header]);
-                            }
-                            requestMessage.Headers.Host = remoteAddress.Host;
+                                BuildRequestMessage(requestMessage, mockRequest);
 
+                                var responseMessage = await httpClient.SendAsync(requestMessage);
+                                var mockResponse = await MockResponse.FromHttpResponse(responseMessage);
 
-                            //foreach (string cookie in request.Cookies)
-                            //{
-                            //    requestMessage.Properties.Add(cookie, request.Cookies[cookie]);
-                            //}
+                                //create json from request and response, incl. baseurl
+                                //add to queue
+                                var obj = JToken.FromObject(mockResponse);
+                                record.Write(obj);
 
-                            HttpResponseMessage res = await httpClient.SendAsync(requestMessage);
-                            string resString = await res.Content.ReadAsStringAsync();
-                            //create json from request and response, incl. baseurl
-                            //add to queue
+                                BuildResponse(response, mockResponse);
 
-                            Console.WriteLine("recording");
-
-                            httpClient.DefaultRequestHeaders.Clear();
+                                break;
+                            default:
+                                throw new OperationFailedException(state, "Player is not in operation.");
                         }
                     }
                     catch (Exception ex)
                     {
-                        Stop();
+                        int statusCode;
+                        string process;
 
-                        throw new OperationFailedException(state, "Player couldn't complete the operation.", ex);
+                        switch (state)
+                        {
+                            case State.Playing:
+                                statusCode = 551;
+                                process = "play";
+
+                                break;
+                            case State.Recording:
+                                statusCode = 552;
+                                process = "record";
+
+                                break;
+                            default:
+                                statusCode = 550;
+                                process = "process";
+
+                                break;
+                        }
+
+                        BuildResponse(response, new MockResponse(statusCode, "Player exception", $"Player could not {process} the request at {request.Url} because of exception. {ex}"));
+                    }
+                    finally
+                    {
+                        response.Close();
                     }
                 }
             });
@@ -154,8 +269,8 @@ namespace HttpMockReq
 
             if (httpListener != null)
             {
-                httpListener.Stop();
-                httpListener.Close();
+                //httpListener.Stop();
+                httpListener.Close(); //dispose and =null?
             }
 
             if(httpClient != null)
@@ -172,7 +287,23 @@ namespace HttpMockReq
 
         #region Play
 
-        private bool VerifyRequestAgainstRecorded(HttpListenerRequest request, dynamic recordedRequest)
+        public void Play(string name)
+        {
+            if (state != State.Idle)
+            {
+                throw new OperationFailedException(state, "Player is already in operation.");
+            }
+            if (cassette == null)
+            {
+                throw new InvalidOperationException("Cassette is not loaded.");
+            }
+
+            state = State.Playing;
+
+            record = cassette.Records.Find(r => r.Name == name);
+        }
+
+        private bool VerifyRequest(HttpListenerRequest request, dynamic recordedRequest)
         {
             //todo
             bool isMatching = recordedRequest.method == request.HttpMethod &&
@@ -193,44 +324,6 @@ namespace HttpMockReq
             return isMatching;
         }
 
-        private void BuildResponseFromRecorded(HttpListenerResponse response, dynamic recordedResponse)
-        {
-            //todo
-            response.StatusCode = recordedResponse.status;
-
-            if (recordedResponse.headers != null)
-            {
-                foreach (var header in recordedResponse.headers)
-                {
-                    response.Headers.Add(header.Name, header.Value.ToString());
-                }
-            }
-
-            byte[] responseBuffer = Encoding.UTF8.GetBytes(recordedResponse.body.ToString()); //?
-            response.ContentLength64 = responseBuffer.Length;
-
-            Stream responseStream = response.OutputStream;
-            responseStream.Write(responseBuffer, 0, responseBuffer.Length);
-            responseStream.Close();
-        }
-
-        public void Play(string name)
-        {
-            if (state != State.Idle)
-            {
-                throw new OperationFailedException(state, "Player is already in operation.");
-            }
-            if (cassette == null)
-            {
-                throw new InvalidOperationException("Cassette is not loaded.");
-            }
-
-            var record = cassette.Records.Find(r => r.Name == name);
-            queue = record.Queue;
-
-            state = State.Playing;
-        }
-
         #endregion
 
         #region Record
@@ -246,13 +339,55 @@ namespace HttpMockReq
                 throw new InvalidOperationException("Cassette is not loaded.");
             }
 
+            state = State.Recording;
+
+            record = new Record(name);
             //if remoteaddr null
             //if httpclient null = diconnected
+        }
 
-            state = State.Recording;
+        private HttpRequestMessage BuildRequestMessage(HttpRequestMessage requestMessage, MockRequest mockRequest)
+        {
+            requestMessage.Method = new HttpMethod(mockRequest.Method);
+            requestMessage.RequestUri = new Uri(mockRequest.Path, UriKind.Relative);
+
+            foreach (string header in mockRequest.Headers.Keys)
+            {
+                requestMessage.Headers.Add(header, mockRequest.Headers[header]);
+            }
+
+            //foreach (string cookie in request.Cookies)
+            //{
+            //    requestMessage.Properties.Add(cookie, request.Cookies[cookie]);
+            //}
+
+            requestMessage.Headers.Host = mockRequest.Host;
+
+            return requestMessage;
         }
 
         #endregion
+
+        private void BuildResponse(HttpListenerResponse response, MockResponse mockResponse)
+        {
+            response.StatusCode = mockResponse.StatusCode;
+            response.StatusDescription = mockResponse.StatusDescription;
+
+            byte[] responseBuffer = Encoding.UTF8.GetBytes(mockResponse.Body);
+            response.ContentLength64 = responseBuffer.Length;
+
+            Stream responseStream = response.OutputStream;
+            responseStream.Write(responseBuffer, 0, responseBuffer.Length);
+            responseStream.Close();
+
+            if (mockResponse.Headers != null)
+            {
+                foreach (var header in mockResponse.Headers)
+                {
+                    response.Headers.Add(header.Key, header.Value.ToString());
+                }
+            }
+        }
 
         public void Pause()
         {
@@ -266,7 +401,6 @@ namespace HttpMockReq
         {
             if (state == State.Playing)
             {
-                queue = null;
             }
             else if (state == State.Recording)
             {
@@ -275,6 +409,8 @@ namespace HttpMockReq
             }
 
             state = State.Idle;
+
+            record = null;
         }
     }
 }

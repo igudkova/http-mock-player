@@ -2,15 +2,34 @@
 
 namespace HttpMockReq
 {
-    public class Record
+    internal class Record
     {
-        public string Name;
-        public readonly Queue Queue;
+        private Queue queue;
 
-        public Record(string name, Queue queue)
+        /// <summary>
+        /// Gets name of the record.
+        /// </summary>
+        public string Name { get; }
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="Record"/> class with a specified name.
+        /// </summary>
+        /// <param name="name">Name of the record.</param>
+        public Record(string name)
         {
-            this.Name = name;
-            this.Queue = queue;
+            queue = new Queue(5);
+
+            Name = name;
+        }
+
+        public void Write(object request)
+        {
+            queue.Enqueue(request);
+        }
+
+        public object Read()
+        {
+            return queue.Dequeue();
         }
     }
 }

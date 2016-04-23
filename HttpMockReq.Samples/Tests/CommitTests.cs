@@ -27,7 +27,7 @@ namespace HttpMockReq.Samples
         /// Successfully creates an account.
         /// </summary>
        // [Test]
-        public async void CanGetRepos()
+        public void CanGetRepos()
         {
             //player.Play("Create");
 

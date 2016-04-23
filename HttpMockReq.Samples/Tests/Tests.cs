@@ -1,7 +1,7 @@
-﻿using NUnit.Framework;
-using System;
+﻿using System;
 using System.IO;
 using System.Reflection;
+using NUnit.Framework;
 
 namespace HttpMockReq.Samples
 {
@@ -9,6 +9,18 @@ namespace HttpMockReq.Samples
     public class Tests
     {
         public static Player Player;
+
+        public static string AssemblyDirectoryName
+        {
+            get
+            {
+                var codeBase = Assembly.GetExecutingAssembly().CodeBase;
+                var codeBaseUriBuilder = new UriBuilder(codeBase);
+                var codeBasePath = Uri.UnescapeDataString(codeBaseUriBuilder.Path);
+
+                return Path.GetDirectoryName(codeBasePath);
+            }
+        }
 
         [OneTimeSetUp]
         public void SetUp()
@@ -25,18 +37,6 @@ namespace HttpMockReq.Samples
         public void TearDown()
         {
             Player.Close();
-        }
-
-        public static string AssemblyDirectoryName
-        {
-            get
-            {
-                var codeBase = Assembly.GetExecutingAssembly().CodeBase;
-                var codeBaseUriBuilder = new UriBuilder(codeBase);
-                var codeBasePath = Uri.UnescapeDataString(codeBaseUriBuilder.Path);
-
-                return Path.GetDirectoryName(codeBasePath);
-            }
         }
     }
 }

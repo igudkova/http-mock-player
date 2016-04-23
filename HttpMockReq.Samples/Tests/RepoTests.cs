@@ -1,26 +1,27 @@
 ﻿using System.Threading.Tasks;
 using NUnit.Framework;
+using System;
+using System.Collections.Generic;
 
 namespace HttpMockReq.Samples
 {
     [TestFixture]
     class RepoTests
     {
-        GithubClient client;
         Cassette cassette;
+        GithubClient client;
 
         [OneTimeSetUp]
-        public void SetUp()
+        public void OneTimeSetUp()
         {
             cassette = new Cassette($"{Tests.AssemblyDirectoryName}/../../Tests/Mock/Http/Repo.json");
 
             Tests.Player.Load(cassette);
 
             client = new GithubClient(Tests.Player.BaseAddress);
-            //client = new GithubClient(new System.Uri("http://localhost:5555"));
         }
 
-        public void PreTest(string recordName)
+        public void SetUp(string recordName)
         {
             if (cassette.Contains(recordName))
             {
@@ -32,7 +33,8 @@ namespace HttpMockReq.Samples
             }
         }
 
-        public void PostTest()
+        [TearDown]
+        public void TearDown()
         {
             Tests.Player.Stop();
         }
@@ -40,12 +42,10 @@ namespace HttpMockReq.Samples
         [Test, Description("Successfully retrieves list of repos")]
         public async Task CanGetRepos()
         {
-            PreTest("GetRepos");
+            SetUp("GetRepos");
 
             var repos = await client.GetRepos("igudkova");
             Assert.IsNotEmpty(repos);
-
-            PostTest();
         }
     }
 }

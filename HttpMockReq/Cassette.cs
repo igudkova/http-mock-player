@@ -1,9 +1,8 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.IO;
-using System.Collections;
 using System.Collections.Generic;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using HttpMockReq.HttpMockReqException;
 
 namespace HttpMockReq
@@ -44,17 +43,17 @@ namespace HttpMockReq
 
                 try
                 {
-                    foreach (var record in JArray.Parse(json))
+                    foreach (var recordJson in JArray.Parse(json))
                     {
-                        var name = record["name"].ToString();
+                        var name = recordJson["name"].ToString();
+                        var record = new Record(name);
 
-                        var queue = new Queue();
-                        foreach (var request in record["requests"])
+                        foreach (var request in recordJson["requests"])
                         {
-                            queue.Enqueue(request);
+                            record.Write(request);
                         }
 
-                        Records.Add(new Record(name, queue));
+                        Records.Add(record);
                     }
                 }
                 catch (JsonReaderException ex)
