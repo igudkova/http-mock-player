@@ -6,7 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using HttpMockReq.HttpMockReqException;
 using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Net.Http.Headers;
 
 namespace HttpMockReq
 {
@@ -22,6 +23,102 @@ namespace HttpMockReq
         private Cassette cassette;
         private Record record;
 
+        private object statelock = new object();
+
+        private class MockRequest
+        {
+            private MockRequest() { }
+
+            internal string Method { get; private set; }
+
+            internal string Path { get; private set; }
+
+            internal string Body { get; private set; }
+
+            internal NameValueCollection Headers { get; private set; }
+
+            internal CookieCollection Cookies { get; private set; }
+
+            internal static MockRequest FromHttpRequest(string host, HttpListenerRequest request)
+            {
+                var mockRequest = new MockRequest()
+                {
+                    Method = request.HttpMethod,
+                    Path = request.Url.PathAndQuery,
+                    Headers = request.Headers,
+                    Cookies = request.Cookies
+                };
+
+                mockRequest.Headers.Set("Host", host);
+
+                if(request.HasEntityBody)
+                {
+                    //Stream body = request.InputStream;
+                    //Encoding encoding = request.ContentEncoding;
+                    //StreamReader reader = new StreamReader(body, encoding);
+
+                    //if (request.ContentType != null)
+                    //{
+                    //    Console.WriteLine("Client data content type {0}", request.ContentType);
+                    //}
+                    //Console.WriteLine("Client data content length {0}", request.ContentLength64);
+
+                    //Console.WriteLine("Start of client data:");
+
+                    //Body = reader.ReadToEnd();
+
+                    //body.Close();
+                    //reader.Close();
+                }
+
+                return mockRequest;
+            }
+
+            internal static MockRequest FromRecordedRequest(JObject recorded)
+            {
+                return recorded.ToObject<MockRequest>();
+            }
+        }
+
+        private class MockResponse
+        {
+            private MockResponse() { }
+
+            internal int StatusCode { get; private set;  }
+
+            internal string StatusDescription { get; private set; }
+
+            internal string Body { get; private set; }
+
+            internal HttpResponseHeaders Headers { get; private set; }
+
+            internal static async Task<MockResponse> FromHttpResponse(HttpResponseMessage responseMessage)
+            {
+                return new MockResponse()
+                {
+                    StatusCode = (int)responseMessage.StatusCode,
+                    StatusDescription = responseMessage.ReasonPhrase,
+                    Body = await responseMessage.Content.ReadAsStringAsync(),
+                    Headers = responseMessage.Headers
+                };
+            }
+
+            internal static MockResponse FromRecordedResponse(JObject recorded)
+            {
+                return recorded.ToObject<MockResponse>();
+            }
+
+            internal static MockResponse FromPlayerError(int statusCode, string statusDescription, string message)
+            {
+                return new MockResponse()
+                {
+                    StatusCode = statusCode,
+                    StatusDescription = statusDescription,
+                    Body = message
+                };
+            }
+        }
+
         /// <summary>
         /// Represents the state of the player.
         /// </summary>
@@ -30,96 +127,6 @@ namespace HttpMockReq
             Idle,
             Playing,
             Recording
-        }
-
-        private class MockRequest
-        {
-            public string Method { get; private set; }
-
-            public string Host { get; private set; }
-
-            public string Path { get; private set; }
-
-            public string Body { get; private set; }
-
-            public Dictionary<string, string> Headers { get; private set; }
-
-            public Dictionary<string, Cookie> Cookies { get; private set; }
-
-            public static MockRequest FromHttpRequest(string host, HttpListenerRequest request)
-            {
-                var mockRequest = new MockRequest()
-                {
-                    Method = request.HttpMethod,
-                    Host = host,
-                    Path = request.Url.PathAndQuery
-                };
-
-                if(request.Headers != null)
-                {
-                    mockRequest.Headers = new Dictionary<string, string>();
-
-                    foreach (var header in request.Headers.AllKeys)
-                    {
-                        mockRequest.Headers.Add(header, request.Headers[header]);
-                    }
-                }
-
-                return mockRequest;
-
-                ////foreach (string cookie in request.Cookies)
-                ////{
-                ////    requestMessage.Properties.Add(cookie, request.Cookies[cookie]);
-                ////}
-
-                //requestMessage.Headers.Host = remoteAddress.Host;
-
-            }
-
-            public static MockRequest FromRecordedRequest(JObject recorded)
-            {
-                return recorded.ToObject<MockRequest>();
-            }
-        }
-
-        private class MockResponse
-        {
-            public int StatusCode { get; private set;  }
-
-            public string StatusDescription { get; private set; }
-
-            public string Body { get; private set; }
-
-            public Dictionary<string, string> Headers { get; private set; }
-
-            public MockResponse(int statusCode, string statusDescription, string body)
-            {
-                StatusCode = statusCode;
-                StatusDescription = statusDescription;
-                Body = body;
-            }
-
-            public static async Task<MockResponse> FromHttpResponse(HttpResponseMessage responseMessage)
-            {
-                var mockResponse = new MockResponse((int)responseMessage.StatusCode, responseMessage.ReasonPhrase, await responseMessage.Content.ReadAsStringAsync());
-
-                if (responseMessage.Headers != null)
-                {
-                    mockResponse.Headers = new Dictionary<string, string>();
-
-                    foreach (var header in responseMessage.Headers)
-                    {
-                        mockResponse.Headers.Add(header.Key, header.Value.ToString());
-                    }
-                }
-
-                return mockResponse;
-            }
-
-            public static MockResponse FromRecordedResponse(JObject recorded)
-            {
-                return recorded.ToObject<MockResponse>();
-            }
         }
 
         /// <summary>
@@ -193,33 +200,38 @@ namespace HttpMockReq
                         switch (state)
                         {
                             case State.Playing:
-                                dynamic rec = record.Read(); //todo: object of MockRequest
+                                {
+                                    var mock = (JObject)record.Read();
 
-                                if (VerifyRequest(request, rec.request))
-                                {
-                                    BuildResponse(response, rec.response);
-                                }
-                                else
-                                {
-                                    BuildResponse(response, new MockResponse(454, "Player request mismatch", $"Player could not play the request at {request.Url}. The request doesn't match the current recorded one."));
+                                    if (VerifyRequest(request, MockRequest.FromRecordedRequest(mock)))
+                                    {
+                                        BuildResponse(response, MockResponse.FromRecordedResponse(mock));
+                                    }
+                                    else
+                                    {
+                                        BuildResponse(response, MockResponse.FromPlayerError(454, "Player request mismatch", $"Player could not play the request at {request.Url}. The request doesn't match the current recorded one."));
+                                    }
                                 }
                                 
                                 break;
                             case State.Recording:
-                                var mockRequest = MockRequest.FromHttpRequest(remoteAddress.Host, request);
-                                var requestMessage = new HttpRequestMessage();
+                                {
+                                    var mockRequest = MockRequest.FromHttpRequest(remoteAddress.Host, request);
+                                    var requestMessage = BuildRequestMessage(mockRequest);
 
-                                BuildRequestMessage(requestMessage, mockRequest);
+                                    var responseMessage = await httpClient.SendAsync(requestMessage);
+                                    var mockResponse = await MockResponse.FromHttpResponse(responseMessage);
 
-                                var responseMessage = await httpClient.SendAsync(requestMessage);
-                                var mockResponse = await MockResponse.FromHttpResponse(responseMessage);
+                                    var mock = JObject.FromObject(new
+                                    {
+                                        request = "",//mockRequest,
+                                        response = ""//mockResponse
+                                    });
 
-                                //create json from request and response, incl. baseurl
-                                //add to queue
-                                var obj = JToken.FromObject(mockResponse);
-                                record.Write(obj);
+                                    record.Write(mock);
 
-                                BuildResponse(response, mockResponse);
+                                    BuildResponse(response, mockResponse);
+                                }
 
                                 break;
                             default:
@@ -250,7 +262,7 @@ namespace HttpMockReq
                                 break;
                         }
 
-                        BuildResponse(response, new MockResponse(statusCode, "Player exception", $"Player could not {process} the request at {request.Url} because of exception. {ex}"));
+                        BuildResponse(response, MockResponse.FromPlayerError(statusCode, "Player exception", $"Player could not {process} the request at {request.Url} because of exception. {ex}"));
                     }
                     finally
                     {
@@ -265,8 +277,6 @@ namespace HttpMockReq
         /// </summary>
         public void Close()
         {
-            this.Stop();
-
             if (httpListener != null)
             {
                 //httpListener.Stop();
@@ -289,39 +299,48 @@ namespace HttpMockReq
 
         public void Play(string name)
         {
-            if (state != State.Idle)
+            lock (statelock)
             {
-                throw new OperationFailedException(state, "Player is already in operation.");
-            }
-            if (cassette == null)
-            {
-                throw new InvalidOperationException("Cassette is not loaded.");
-            }
+                if (state != State.Idle)
+                {
+                    throw new OperationFailedException(state, "Player is already in operation.");
+                }
+                if (cassette == null)
+                {
+                    throw new InvalidOperationException("Cassette is not loaded.");
+                }
 
-            state = State.Playing;
+                record = cassette.Find(name);
 
-            record = cassette.Records.Find(r => r.Name == name);
+                if (record == null)
+                {
+                    throw new InvalidOperationException($"Cassette doesn't contain a record with the given name: {name}.");
+                }
+
+                state = State.Playing;
+            }
         }
 
-        private bool VerifyRequest(HttpListenerRequest request, dynamic recordedRequest)
+        private bool VerifyRequest(HttpListenerRequest request, MockRequest mockRequest)
         {
-            //todo
-            bool isMatching = recordedRequest.method == request.HttpMethod &&
-                              recordedRequest.path == request.Url.AbsolutePath &&
-                              (recordedRequest.query ?? "") == request.Url.Query;
-            if (isMatching && recordedRequest.headers != null)
-            {
-                foreach (var header in recordedRequest.headers)
-                {
-                    if (request.Headers.Get(header.Name) != header.Value.ToString())
-                    {
-                        isMatching = false;
-                        break;
-                    }
-                }
-            }
+            ////todo
+            //bool isMatching = mockRequest.Method == request.HttpMethod &&
+            //                  mockRequest.Path == request.Url.AbsolutePath &&
+            //                  (mockRequest.query ?? "") == request.Url.Query;
+            //if (isMatching && mockRequest.headers != null)
+            //{
+            //    foreach (var header in mockRequest.headers)
+            //    {
+            //        if (request.Headers.Get(header.Name) != header.Value.ToString())
+            //        {
+            //            isMatching = false;
+            //            break;
+            //        }
+            //    }
+            //}
 
-            return isMatching;
+            //return isMatching;
+            return true;
         }
 
         #endregion
@@ -330,26 +349,38 @@ namespace HttpMockReq
 
         public void Record(string name)
         {
-            if (state != State.Idle)
+            lock (statelock)
             {
-                throw new OperationFailedException(state, "Player is already in operation.");
-            }
-            if (cassette == null)
-            {
-                throw new InvalidOperationException("Cassette is not loaded.");
-            }
+                if (state != State.Idle)
+                {
+                    throw new OperationFailedException(state, "Player is already in operation.");
+                }
+                if (cassette == null)
+                {
+                    throw new InvalidOperationException("Cassette is not loaded.");
+                }
 
-            state = State.Recording;
+                record = new Record(name);
 
-            record = new Record(name);
-            //if remoteaddr null
-            //if httpclient null = diconnected
+                state = State.Recording;
+
+                //if remoteaddr null
+                //if httpclient null = diconnected
+            }
         }
 
-        private HttpRequestMessage BuildRequestMessage(HttpRequestMessage requestMessage, MockRequest mockRequest)
+        private HttpRequestMessage BuildRequestMessage(MockRequest mockRequest)
         {
-            requestMessage.Method = new HttpMethod(mockRequest.Method);
-            requestMessage.RequestUri = new Uri(mockRequest.Path, UriKind.Relative);
+            var requestMessage = new HttpRequestMessage()
+            {
+                Method = new HttpMethod(mockRequest.Method),
+                RequestUri = new Uri(mockRequest.Path, UriKind.Relative)
+            };
+
+            if(mockRequest.Body != null)
+            {
+                requestMessage.Content = new StringContent(mockRequest.Body);
+            }
 
             foreach (string header in mockRequest.Headers.Keys)
             {
@@ -360,8 +391,6 @@ namespace HttpMockReq
             //{
             //    requestMessage.Properties.Add(cookie, request.Cookies[cookie]);
             //}
-
-            requestMessage.Headers.Host = mockRequest.Host;
 
             return requestMessage;
         }
@@ -389,28 +418,24 @@ namespace HttpMockReq
             }
         }
 
-        public void Pause()
-        {
-
-        }
-
         /// <summary>
         /// Causes the player to stop playing or recording requests.
         /// </summary>
         public void Stop()
         {
-            if (state == State.Playing)
+            lock (statelock)
             {
-            }
-            else if (state == State.Recording)
-            {
-                //save to file
-                //cassette.Save();
-            }
+                record.Rewind();
 
-            state = State.Idle;
+                if (state == State.Recording)
+                {
+                    cassette.Save(record);
+                }
 
-            record = null;
+                record = null;
+
+                state = State.Idle;
+            }
         }
     }
 }

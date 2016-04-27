@@ -1,7 +1,5 @@
 ﻿using System.Threading.Tasks;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
 
 namespace HttpMockReq.Samples
 {
@@ -21,6 +19,7 @@ namespace HttpMockReq.Samples
             client = new GithubClient(Tests.Player.BaseAddress);
         }
 
+        // todo explain
         public void SetUp(string recordName)
         {
             if (cassette.Contains(recordName))

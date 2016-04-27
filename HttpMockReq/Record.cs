@@ -4,32 +4,49 @@ namespace HttpMockReq
 {
     internal class Record
     {
-        private Queue queue;
+        private ArrayList list;
+        private IEnumerator enumerator;
 
-        /// <summary>
-        /// Gets name of the record.
-        /// </summary>
-        public string Name { get; }
+        internal string Name { get; }
 
-        /// <summary>
-        /// Initializes a new instance of <see cref="Record"/> class with a specified name.
-        /// </summary>
-        /// <param name="name">Name of the record.</param>
-        public Record(string name)
+        internal Record(string name)
         {
-            queue = new Queue(5);
+            list = new ArrayList();
+
+            enumerator = list.GetEnumerator();
 
             Name = name;
         }
 
-        public void Write(object request)
+        internal object Read()
         {
-            queue.Enqueue(request);
+            if(enumerator.MoveNext())
+            {
+                return enumerator.Current;
+            }
+            else
+            {
+                return null;
+            }
         }
 
-        public object Read()
+        internal void Write(object request)
         {
-            return queue.Dequeue();
+            list.Add(request);
+
+            enumerator = list.GetEnumerator();
+        }
+
+        internal void WriteRange(object[] requests)
+        {
+            list.AddRange(requests);
+
+            enumerator = list.GetEnumerator();
+        }
+
+        internal void Rewind()
+        {
+            enumerator.Reset();
         }
     }
 }
