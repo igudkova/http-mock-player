@@ -43,7 +43,7 @@ namespace HttpMockReq.Samples
         {
             SetUp("GetRepos");
 
-            var repos = await client.GetRepos("igudkova");
+            var repos = await client.GetRepos("igudkova1");
             Assert.IsNotEmpty(repos);
         }
     }

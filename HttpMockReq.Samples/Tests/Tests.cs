@@ -25,11 +25,7 @@ namespace HttpMockReq.Samples
         [OneTimeSetUp]
         public void SetUp()
         {
-            Player = new Player()
-            {
-                BaseAddress = new Uri("http://localhost:5555"),
-                RemoteAddress = new Uri("https://api.github.com")
-            };
+            Player = new Player(new Uri("http://localhost:5555"), new Uri("https://api.github.com"));
             Player.Start();
         }
 

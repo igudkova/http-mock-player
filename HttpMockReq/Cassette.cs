@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using HttpMockReq.HttpMockReqException;
+using System.Collections;
 
 namespace HttpMockReq
 {
@@ -23,7 +24,7 @@ namespace HttpMockReq
                 foreach (var jrecord in JArray.Parse(json))
                 {
                     var name = jrecord["name"].ToString();
-                    var requests = jrecord["requests"].ToObject<object[]>();
+                    var requests = jrecord["requests"].ToObject<IList>();
 
                     var record = new Record(name);
 
@@ -92,11 +93,6 @@ namespace HttpMockReq
         /// <param name="path"></param>
         public Cassette(string path)
         {
-            if(path == null)
-            {
-                throw new ArgumentNullException("path");
-            }
-
             this.path = path;
             this.records = new List<Record>();
 

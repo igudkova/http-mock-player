@@ -37,7 +37,7 @@ namespace HttpMockReq
             enumerator = list.GetEnumerator();
         }
 
-        internal void WriteRange(object[] requests)
+        internal void WriteRange(IList requests)
         {
             list.AddRange(requests);
 
