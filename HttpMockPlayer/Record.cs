@@ -1,28 +1,27 @@
 ﻿using System.Collections;
 
-namespace HttpMockReq
+namespace HttpMockPlayer
 {
     internal class Record
     {
-        private ArrayList list;
-        private IEnumerator enumerator;
-
+        internal ArrayList List { get; }
+        internal IEnumerator Enumerator { get; private set; }
         internal string Name { get; }
 
         internal Record(string name)
         {
-            list = new ArrayList();
+            List = new ArrayList();
 
-            enumerator = list.GetEnumerator();
+            Enumerator = List.GetEnumerator();
 
             Name = name;
         }
 
         internal object Read()
         {
-            if(enumerator.MoveNext())
+            if(Enumerator.MoveNext())
             {
-                return enumerator.Current;
+                return Enumerator.Current;
             }
             else
             {
@@ -32,21 +31,21 @@ namespace HttpMockReq
 
         internal void Write(object request)
         {
-            list.Add(request);
+            List.Add(request);
 
-            enumerator = list.GetEnumerator();
+            Enumerator = List.GetEnumerator();
         }
 
         internal void WriteRange(IList requests)
         {
-            list.AddRange(requests);
+            List.AddRange(requests);
 
-            enumerator = list.GetEnumerator();
+            Enumerator = List.GetEnumerator();
         }
 
         internal void Rewind()
         {
-            enumerator.Reset();
+            Enumerator.Reset();
         }
     }
 }

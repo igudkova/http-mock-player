@@ -1,25 +1,24 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
-using HttpMockReq.HttpMockReqException;
 using System.Collections;
+using Newtonsoft.Json.Linq;
 
-namespace HttpMockReq
+namespace HttpMockPlayer
 {
     /// <summary>
-    /// 
+    /// Represents a collection of mock records stored in a JSON file.
     /// </summary>
     public class Cassette
     {
-        private string path;
-        private List<Record> records;
+        internal string Path { get; }
+        internal List<Record> Records { get; }
 
         private void ReadFromFile()
         {
-            if (File.Exists(path))
+            if (File.Exists(Path))
             {
-                var json = File.ReadAllText(path);
+                var json = File.ReadAllText(Path);
 
                 foreach (var jrecord in JArray.Parse(json))
                 {
@@ -27,10 +26,9 @@ namespace HttpMockReq
                     var requests = jrecord["requests"].ToObject<IList>();
 
                     var record = new Record(name);
-
                     record.WriteRange(requests);
 
-                    records.Add(record);
+                    Records.Add(record);
                 }
             }
         }
@@ -39,7 +37,7 @@ namespace HttpMockReq
         {
             JArray jrecords = new JArray();
 
-            foreach (var record in records)
+            foreach (var record in Records)
             {
                 JArray jrequests = new JArray();
 
@@ -59,10 +57,10 @@ namespace HttpMockReq
                 jrecords.Add(jrecord);
             }
 
-            var directory = Path.GetDirectoryName(path);
+            var directory = System.IO.Path.GetDirectoryName(Path);
             Directory.CreateDirectory(directory);
 
-            using (StreamWriter fileWriter = new StreamWriter(path))
+            using (StreamWriter fileWriter = new StreamWriter(Path))
             {
                 fileWriter.Write(jrecords);
             }
@@ -70,12 +68,12 @@ namespace HttpMockReq
 
         internal Record Find(string name)
         {
-            return records.Find(record => record.Name == name);
+            return Records.Find(record => record.Name == name);
         }
 
         internal void Save(Record record)
         {
-            records.Add(record);
+            Records.Add(record);
 
             try
             {
@@ -83,18 +81,25 @@ namespace HttpMockReq
             }
             catch (Exception ex)
             {
-                throw new CassetteException($"Record {record.Name} cannot be saved.", path, ex);
+                throw new CassetteException($"Record {record.Name} cannot be saved.", Path, ex);
             }
         }
 
         /// <summary>
-        /// 
+        /// Initializes a new instance of the <see cref="Cassette"/> class with a specified file path. 
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name="path">Cassette file path. If a file with this path exists, its contents is parsed into a list of records.</param>
+        /// <exception cref="ArgumentNullException"/>
+        /// <exception cref="CassetteException"/>
         public Cassette(string path)
         {
-            this.path = path;
-            this.records = new List<Record>();
+            if (path == null)
+            {
+                throw new ArgumentNullException("path");
+            }
+
+            this.Path = path;
+            this.Records = new List<Record>();
 
             try
             {
@@ -102,18 +107,18 @@ namespace HttpMockReq
             }
             catch (Exception ex)
             {
-                throw new CassetteException("Cassette cannot be parsed.", path, ex);
+                throw new CassetteException("Cassette cannot be read.", path, ex);
             }
         }
 
         /// <summary>
-        /// 
+        /// Determines whether this <see cref="Cassette"/> object contains a record with a specified name.
         /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
+        /// <param name="name">Name of the record.</param>
+        /// <returns>true, if the <see cref="Cassette"/> contains a record with the specified name; otherwise, false.</returns>
         public bool Contains(string name)
         {
-            return records.Exists(record => record.Name == name);
+            return Records.Exists(record => record.Name == name);
         }
     }
 }

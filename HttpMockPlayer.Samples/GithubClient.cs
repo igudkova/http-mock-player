@@ -5,7 +5,7 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace HttpMockReq.Samples
+namespace HttpMockPlayer.Samples
 {
     /// <summary>
     /// Implements sample GitHub API client.
@@ -53,14 +53,14 @@ namespace HttpMockReq.Samples
 
         public async Task<string> GetCommits(string owner, string repo)
         {
-            HttpResponseMessage res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, "repos/" + owner + "/" + repo + "/commits"));
+            HttpResponseMessage res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"repos/{owner}/{repo}/commits"));
 
             return await res.Content.ReadAsStringAsync();
         }
 
         public async Task<string> GetCommit(string owner, string repo, string sha)
         {
-            HttpResponseMessage res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, "repos/" + owner + "/" + repo + "/commits"));
+            HttpResponseMessage res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"repos/{owner}/{repo}/commits"));
 
             return await res.Content.ReadAsStringAsync();
         }

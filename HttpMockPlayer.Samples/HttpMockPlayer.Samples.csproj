@@ -7,8 +7,8 @@
     <ProjectGuid>{3E83FACD-6326-427A-B947-3E0E1487D9F6}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>HttpMockReq.Samples</RootNamespace>
-    <AssemblyName>HttpMockReq.Samples</AssemblyName>
+    <RootNamespace>HttpMockPlayer.Samples</RootNamespace>
+    <AssemblyName>HttpMockPlayer.Samples</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -37,11 +37,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\HttpMockReq\packages\Newtonsoft.Json.8.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\HttpMockPlayer\packages\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="nunit.framework, Version=3.0.5813.39031, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
-      <HintPath>..\HttpMockReq\packages\NUnit.3.0.1\lib\net45\nunit.framework.dll</HintPath>
+    <Reference Include="nunit.framework, Version=3.2.1.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
+      <HintPath>..\HttpMockPlayer\packages\NUnit.3.2.1\lib\net45\nunit.framework.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -56,7 +56,7 @@
   <ItemGroup>
     <Compile Include="Repo.cs" />
     <Compile Include="Tests\CommitTests.cs" />
-    <Compile Include="Tests\Tests.cs" />
+    <Compile Include="Tests\Context.cs" />
     <Compile Include="Tests\RepoTests.cs" />
     <Compile Include="GithubClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -65,9 +65,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\HttpMockReq\HttpMockReq.csproj">
+    <ProjectReference Include="..\HttpMockPlayer\HttpMockPlayer.csproj">
       <Project>{caa76a91-aba0-4ca5-85e8-447441d7977c}</Project>
-      <Name>HttpMockReq</Name>
+      <Name>HttpMockPlayer</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

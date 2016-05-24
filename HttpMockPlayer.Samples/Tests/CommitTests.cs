@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-namespace HttpMockReq.Samples
+namespace HttpMockPlayer.Samples.Tests
 {
     //[TestFixture]
     class GithubClientTests
