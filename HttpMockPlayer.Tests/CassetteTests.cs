@@ -133,10 +133,10 @@ namespace HttpMockPlayer.Tests
 
             Assert.AreEqual(cassette.Records.Count, 3);
 
-            var lastrecord = cassette.Records[2];
+            var lastRecord = cassette.Records[2];
 
-            Assert.AreEqual(lastrecord.Name, "record");
-            Assert.AreEqual(lastrecord.List.Count, 1);
+            Assert.AreEqual(lastRecord.Name, "record");
+            Assert.AreEqual(lastRecord.List.Count, 1);
         }
 
         [Test]

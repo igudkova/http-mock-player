@@ -6,12 +6,6 @@ namespace HttpMockPlayer.Tests
     [TestFixture]
     public class PlayerTests
     {
-        //set another remote address
-        //cookies, headers, content
-        //empty recording
-        //headers: restricted and other
-        //player exception response
-
         [Test]
         public void Initialize_Succeeds()
         {
