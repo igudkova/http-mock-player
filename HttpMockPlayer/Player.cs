@@ -21,6 +21,9 @@ namespace HttpMockPlayer
         private HttpListener httpListener;
         private Cassette cassette;
         private Record record;
+
+        // mutex object, used to avoid collisions when processing an incoming request 
+        // according to the current player state, or updating the player state value
         private object statelock;
 
         /// <summary>
@@ -714,6 +717,7 @@ namespace HttpMockPlayer
         /// </summary>
         public enum State
         {
+            Off,
             Idle,
             Playing,
             Recording
@@ -724,109 +728,122 @@ namespace HttpMockPlayer
         /// </summary>
         public void Start()
         {
-            httpListener.Start();
-
-            Task.Run(() =>
+            lock (statelock)
             {
-                while (httpListener.IsListening)
+                if (CurrentState != State.Off)
                 {
-                    HttpListenerContext context = httpListener.GetContext();
-                    HttpListenerRequest playerRequest = context.Request;
-                    HttpListenerResponse playerResponse = context.Response;
-
-                    try
-                    {
-                        switch (CurrentState)
-                        {
-                            case State.Playing:
-                                {
-                                    var mock = (JObject)record.Read();
-                                    var mockRequest = MockRequest.FromJson((JObject)mock["request"]);
-                                    var mockPlayerRequest = MockRequest.FromHttpRequest(remoteAddress.Host, playerRequest);
-
-                                    MockResponse mockResponse;
-
-                                    if (mockRequest.Equals(mockPlayerRequest))
-                                    {
-                                        mockResponse = MockResponse.FromJson((JObject)mock["response"]);
-                                    }
-                                    else
-                                    {
-                                        mockResponse = MockResponse.FromPlayerError(PlayerErrorCode.RequestNotFound, "Player request mismatch", $"Player could not play the request at {playerRequest.Url.PathAndQuery}. The request doesn't match the current recorded one.");
-                                    }
-
-                                    BuildResponse(playerResponse, mockResponse);
-                                }
-
-                                break;
-                            case State.Recording:
-                                {
-                                    var mockRequest = MockRequest.FromHttpRequest(remoteAddress.Host, playerRequest);
-                                    var request = BuildRequest(mockRequest);
-
-                                    MockResponse mockResponse;
-
-                                    try
-                                    {
-                                        using (var response = (HttpWebResponse)request.GetResponse())
-                                        {
-                                            mockResponse = MockResponse.FromHttpResponse(response);
-                                        }
-                                    }
-                                    catch (WebException ex)
-                                    {
-                                        mockResponse = MockResponse.FromHttpResponse((HttpWebResponse)ex.Response);
-                                    }
-
-                                    var mock = JObject.FromObject(new
-                                    {
-                                        request = mockRequest.ToJson(),
-                                        response = mockResponse.ToJson()
-                                    });
-                                    record.Write(mock);
-
-                                    BuildResponse(playerResponse, mockResponse);
-                                }
-
-                                break;
-                            default:
-                                throw new PlayerStateException(CurrentState, "Player is not in operation.");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        PlayerErrorCode errorCode;
-                        string process;
-
-                        switch (CurrentState)
-                        {
-                            case State.Playing:
-                                errorCode = PlayerErrorCode.PlayException;
-                                process = "play";
-
-                                break;
-                            case State.Recording:
-                                errorCode = PlayerErrorCode.RecordException;
-                                process = "record";
-
-                                break;
-                            default:
-                                errorCode = PlayerErrorCode.Exception;
-                                process = "process";
-
-                                break;
-                        }
-
-                        var mockResponse = MockResponse.FromPlayerError(errorCode, "Player exception", $"Player could not {process} the request at {playerRequest.Url.PathAndQuery} because of exception: {ex}");
-
-                        BuildResponse(playerResponse, mockResponse);
-                    }
-                    finally
-                    {
-                        playerResponse.Close();
-                    }
+                    throw new PlayerStateException(CurrentState, "Player has already started.");
                 }
-            });
+
+                httpListener.Start();
+
+                Task.Run(() =>
+                {
+                    while (httpListener.IsListening)
+                    {
+                        HttpListenerContext context = httpListener.GetContext();
+                        HttpListenerRequest playerRequest = context.Request;
+                        HttpListenerResponse playerResponse = context.Response;
+
+                        lock (statelock)
+                        {
+                            try
+                            {
+                                switch (CurrentState)
+                                {
+                                    case State.Playing:
+                                        {
+                                            var mock = (JObject)record.Read();
+                                            var mockRequest = MockRequest.FromJson((JObject)mock["request"]);
+                                            var mockPlayerRequest = MockRequest.FromHttpRequest(remoteAddress.Host, playerRequest);
+
+                                            MockResponse mockResponse;
+
+                                            if (mockRequest.Equals(mockPlayerRequest))
+                                            {
+                                                mockResponse = MockResponse.FromJson((JObject)mock["response"]);
+                                            }
+                                            else
+                                            {
+                                                mockResponse = MockResponse.FromPlayerError(PlayerErrorCode.RequestNotFound, "Player request mismatch", $"Player could not play the request at {playerRequest.Url.PathAndQuery}. The request doesn't match the current recorded one.");
+                                            }
+
+                                            BuildResponse(playerResponse, mockResponse);
+                                        }
+
+                                        break;
+                                    case State.Recording:
+                                        {
+                                            var mockRequest = MockRequest.FromHttpRequest(remoteAddress.Host, playerRequest);
+                                            var request = BuildRequest(mockRequest);
+
+                                            MockResponse mockResponse;
+
+                                            try
+                                            {
+                                                using (var response = (HttpWebResponse)request.GetResponse())
+                                                {
+                                                    mockResponse = MockResponse.FromHttpResponse(response);
+                                                }
+                                            }
+                                            catch (WebException ex)
+                                            {
+                                                mockResponse = MockResponse.FromHttpResponse((HttpWebResponse)ex.Response);
+                                            }
+
+                                            var mock = JObject.FromObject(new
+                                            {
+                                                request = mockRequest.ToJson(),
+                                                response = mockResponse.ToJson()
+                                            });
+                                            record.Write(mock);
+
+                                            BuildResponse(playerResponse, mockResponse);
+                                        }
+
+                                        break;
+                                    default:
+                                        throw new PlayerStateException(CurrentState, "Player is not in operation.");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                PlayerErrorCode errorCode;
+                                string process;
+
+                                switch (CurrentState)
+                                {
+                                    case State.Playing:
+                                        errorCode = PlayerErrorCode.PlayException;
+                                        process = "play";
+
+                                        break;
+                                    case State.Recording:
+                                        errorCode = PlayerErrorCode.RecordException;
+                                        process = "record";
+
+                                        break;
+                                    default:
+                                        errorCode = PlayerErrorCode.Exception;
+                                        process = "process";
+
+                                        break;
+                                }
+
+                                var mockResponse = MockResponse.FromPlayerError(errorCode, "Player exception", $"Player could not {process} the request at {playerRequest.Url.PathAndQuery} because of exception: {ex}");
+
+                                BuildResponse(playerResponse, mockResponse);
+                            }
+                            finally
+                            {
+                                playerResponse.Close();
+                            }
+                        }
+                    }
+                });
+
+                CurrentState = State.Idle;
+            }
         }
 
         /// <summary>
@@ -840,10 +857,16 @@ namespace HttpMockPlayer
         {
             lock (statelock)
             {
+                if (CurrentState == State.Off)
+                {
+                    throw new PlayerStateException(CurrentState, "Player is not started.");
+                }
+
                 if (CurrentState != State.Idle)
                 {
                     throw new PlayerStateException(CurrentState, "Player is already in operation.");
                 }
+
                 if (cassette == null)
                 {
                     throw new InvalidOperationException("Cassette is not loaded.");
@@ -869,10 +892,16 @@ namespace HttpMockPlayer
         {
             lock (statelock)
             {
+                if (CurrentState == State.Off)
+                {
+                    throw new PlayerStateException(CurrentState, "Player is not started.");
+                }
+
                 if (CurrentState != State.Idle)
                 {
                     throw new PlayerStateException(CurrentState, "Player is already in operation.");
                 }
+
                 if (cassette == null)
                 {
                     throw new InvalidOperationException("Cassette is not loaded.");
@@ -885,22 +914,30 @@ namespace HttpMockPlayer
         }
 
         /// <summary>
-        /// Sets this instance to <see cref="State.Idle"/> state and causes it to stop processing requests.
+        /// Sets this instance to <see cref="State.Idle"/> state.
         /// </summary>
         public void Stop()
         {
             lock (statelock)
             {
-                record.Rewind();
-
-                if (CurrentState == State.Recording)
+                if (CurrentState == State.Off)
                 {
-                    cassette.Save(record);
+                    throw new PlayerStateException(CurrentState, "Player is not started.");
                 }
 
-                record = null;
+                if (CurrentState != State.Idle)
+                {
+                    record.Rewind();
 
-                CurrentState = State.Idle;
+                    if (CurrentState == State.Recording)
+                    {
+                        cassette.Save(record);
+                    }
+
+                    record = null;
+
+                    CurrentState = State.Idle;
+                }
             }
         }
 
@@ -920,9 +957,14 @@ namespace HttpMockPlayer
         /// </summary>
         public void Close()
         {
-            if (httpListener != null)
+            lock (statelock)
             {
-                httpListener.Close();
+                if (httpListener != null)
+                {
+                    httpListener.Close();
+                }
+
+                CurrentState = State.Off;
             }
         }
     }

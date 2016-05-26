@@ -4,7 +4,6 @@ using System.Reflection;
 
 namespace HttpMockPlayer.Tests
 {
-    //[SetUpFixture]
     public class Context
     {
         private static string assemblyDirectoryName;
@@ -25,16 +24,5 @@ namespace HttpMockPlayer.Tests
                 return assemblyDirectoryName;
             }
         }
-
-        //public static string ValidCassettePath { get; private set; }
-
-        //public static string InvalidCassettePath { get; private set; }
-
-        //[OneTimeSetUp]
-        //public void SetUp()
-        //{
-        //    ValidCassettePath = $"{assemblyDirectoryName}/../../Cassettes/valid.json";
-        //    InvalidCassettePath = $"{assemblyDirectoryName}/../../Cassettes/invalid.json";
-        //}
     }
 }

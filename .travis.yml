@@ -1,0 +1,9 @@
+sudo: false
+language: csharp
+solution: HttpMockPlayer/HttpMockPlayer.sln
+before_install:
+  - travis_retry nuget install NUnit.Runners -version 3.2.1
+before_script:
+  - nuget restore HttpMockPlayer/HttpMockPlayer.sln
+after_script:
+  - nunit-console HttpMockPlayer.Tests/bin/Release/HttpMockPlayer.Tests.dll
