@@ -8,25 +8,6 @@ namespace HttpMockPlayer.Tests
     [TestFixture]
     class CassetteTests
     {
-        string pathValid = $"{Context.AssemblyDirectoryName}/valid.json";
-        string pathInvalid = $"{Context.AssemblyDirectoryName}/invalid.json";
-        string pathNew = $"{Context.AssemblyDirectoryName}/new.json";
-
-        [SetUp]
-        public void SetUp()
-        {
-            File.Copy($"{Context.AssemblyDirectoryName}/../../Cassettes/valid.json", pathValid);
-            File.Copy($"{Context.AssemblyDirectoryName}/../../Cassettes/invalid.json", pathInvalid);
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            File.Delete(pathValid);
-            File.Delete(pathInvalid);
-            File.Delete(pathNew);
-        }
-
         [Test]
         public void Initialize_NullPath_Throws()
         {
@@ -36,7 +17,7 @@ namespace HttpMockPlayer.Tests
         [Test]
         public void Initialize_FileNotExists_CreatesEmptyRecords()
         {
-            var cassette = new Cassette("anyfile");
+            var cassette = new Cassette(Context.CassetteNew);
 
             Assert.IsNotNull(cassette.Records);
             Assert.IsEmpty(cassette.Records);
@@ -45,7 +26,7 @@ namespace HttpMockPlayer.Tests
         [Test]
         public void Initialize_ValidFile_LoadsRecords()
         {
-            var cassette = new Cassette(pathValid);
+            var cassette = new Cassette(Context.Cassette1);
 
             Assert.AreEqual(cassette.Records.Count, 2);
 
@@ -63,26 +44,26 @@ namespace HttpMockPlayer.Tests
         [Test]
         public void Initialize_InvalidFile_Throws()
         {
-            Assert.Throws<CassetteException>(() => new Cassette(pathInvalid));
+            Assert.Throws<CassetteException>(() => new Cassette(Context.Cassette3));
         }
 
         [Test]
         public void Save_FileNotExists_CreatesValidFile()
         {
-            var cassette = new Cassette(pathNew);
+            var cassette = new Cassette(Context.CassetteNew);
             var record = new Record("record");
             var request = JObject.Parse("{\"request\":{},\"response\":{}}");
 
             record.Write(request);
             cassette.Save(record);
 
-            Assert.IsTrue(File.Exists(pathNew));
+            Assert.IsTrue(File.Exists(cassette.Path));
 
-            var newCassette = new Cassette(pathNew);
+            var anotherCassette = new Cassette(cassette.Path);
 
-            Assert.AreEqual(newCassette.Records.Count, 1);
+            Assert.AreEqual(anotherCassette.Records.Count, 1);
 
-            record = newCassette.Records[0];
+            record = anotherCassette.Records[0];
 
             Assert.AreEqual(record.Name, "record");
             Assert.AreEqual(record.List.Count, 1);
@@ -91,14 +72,14 @@ namespace HttpMockPlayer.Tests
         [Test]
         public void Save_FileExists_UpdatesToValidFile()
         {
-            var cassette = new Cassette(pathValid);
+            var cassette = new Cassette(Context.Cassette1);
             var record = new Record("record");
             var request = JObject.Parse("{\"request\":{},\"response\":{}}");
 
             record.Write(request);
             cassette.Save(record);
 
-            var anotherCassette = new Cassette(pathValid);
+            var anotherCassette = new Cassette(cassette.Path);
 
             Assert.AreEqual(anotherCassette.Records.Count, 3);
 
@@ -121,7 +102,7 @@ namespace HttpMockPlayer.Tests
         [Test]
         public void Save_AppendsRecord()
         {
-            var cassette = new Cassette(pathValid);
+            var cassette = new Cassette(Context.Cassette1);
 
             Assert.AreEqual(cassette.Records.Count, 2);
 
@@ -142,7 +123,7 @@ namespace HttpMockPlayer.Tests
         [Test]
         public void Save_RewindsRecord()
         {
-            var cassette = new Cassette(pathValid);
+            var cassette = new Cassette(Context.Cassette1);
             var record = new Record("record");
 
             cassette.Save(record);
@@ -158,7 +139,7 @@ namespace HttpMockPlayer.Tests
         [Test]
         public void Contain_RecordExists_ReturnsTrue()
         {
-            var cassette = new Cassette(pathValid);
+            var cassette = new Cassette(Context.Cassette1);
 
             Assert.IsTrue(cassette.Contains("record1"));
         }
@@ -166,7 +147,7 @@ namespace HttpMockPlayer.Tests
         [Test]
         public void Contain_RecordNotExists_ReturnsFalse()
         {
-            var cassette = new Cassette(pathValid);
+            var cassette = new Cassette(Context.Cassette1);
 
             Assert.IsFalse(cassette.Contains("wrong"));
         }
@@ -174,7 +155,7 @@ namespace HttpMockPlayer.Tests
         [Test]
         public void Find_RecordExists_ReturnsRecord()
         {
-            var cassette = new Cassette(pathValid);
+            var cassette = new Cassette(Context.Cassette1);
             var record = cassette.Find("record1");
 
             Assert.IsNotNull(record);
@@ -185,7 +166,7 @@ namespace HttpMockPlayer.Tests
         [Test]
         public void Find_RecordNotExists_ReturnsNull()
         {
-            var cassette = new Cassette(pathValid);
+            var cassette = new Cassette(Context.Cassette1);
             var record = cassette.Find("wrong");
 
             Assert.IsNull(record);

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Net.Sockets;
 using NUnit.Framework;
+using System.Net;
 
 namespace HttpMockPlayer.Tests
 {
@@ -8,8 +10,10 @@ namespace HttpMockPlayer.Tests
     {
         Uri baseAddress = new Uri("http://localhost:5555");
         Uri remoteAddress = new Uri("https://localhost:5560");
-        Cassette cassette = new Cassette($"{Context.AssemblyDirectoryName}/../../Cassettes/valid.json");
         Player player;
+
+        Cassette cassette1 = new Cassette(Context.Cassette1);
+        Cassette cassette2 = new Cassette(Context.Cassette2);
 
         [SetUp]
         public void SetUp()
@@ -52,7 +56,7 @@ namespace HttpMockPlayer.Tests
         [Test]
         public void Play_IsOff_Throws()
         {
-            player.Load(cassette);
+            player.Load(cassette1);
 
             var ex = Assert.Throws<PlayerStateException>(() => player.Play("record1"));
 
@@ -63,7 +67,7 @@ namespace HttpMockPlayer.Tests
         public void Play_IsBusy_Throws()
         {
             player.Start();
-            player.Load(cassette);
+            player.Load(cassette1);
             player.Play("record1");
 
             var ex = Assert.Throws<PlayerStateException>(() => player.Play("record1"));
@@ -88,7 +92,7 @@ namespace HttpMockPlayer.Tests
         public void Play_RecordNotFound_Throws()
         {
             player.Start();
-            player.Load(cassette);
+            player.Load(cassette1);
 
             Assert.Throws<ArgumentException>(() => player.Play("wrong"));
         }
@@ -97,7 +101,7 @@ namespace HttpMockPlayer.Tests
         public void Play_IsIdle_SetsState()
         {
             player.Start();
-            player.Load(cassette);
+            player.Load(cassette1);
             player.Play("record1");
 
             Assert.AreEqual(player.CurrentState, Player.State.Playing);
@@ -106,7 +110,7 @@ namespace HttpMockPlayer.Tests
         [Test]
         public void Record_IsOff_Throws()
         {
-            player.Load(cassette);
+            player.Load(cassette1);
 
             var ex = Assert.Throws<PlayerStateException>(() => player.Record("newrecord"));
 
@@ -117,7 +121,7 @@ namespace HttpMockPlayer.Tests
         public void Record_IsBusy_Throws()
         {
             player.Start();
-            player.Load(cassette);
+            player.Load(cassette1);
             player.Play("record1");
 
             var ex = Assert.Throws<PlayerStateException>(() => player.Record("newrecord"));
@@ -142,7 +146,7 @@ namespace HttpMockPlayer.Tests
         public void Record_IsIdle_SetsState()
         {
             player.Start();
-            player.Load(cassette);
+            player.Load(cassette1);
             player.Record("newrecord");
 
             Assert.AreEqual(player.CurrentState, Player.State.Recording);
@@ -163,7 +167,7 @@ namespace HttpMockPlayer.Tests
             player.Stop();
             Assert.AreEqual(player.CurrentState, Player.State.Idle);
 
-            player.Load(cassette);
+            player.Load(cassette1);
             player.Play("record1");
             player.Stop();
             Assert.AreEqual(player.CurrentState, Player.State.Idle);
@@ -181,7 +185,7 @@ namespace HttpMockPlayer.Tests
             var ex = Assert.Throws<PlayerStateException>(() => player.Start());
             Assert.AreEqual(ex.State, Player.State.Idle);
 
-            player.Load(cassette);
+            player.Load(cassette1);
             player.Play("record1");
 
             ex = Assert.Throws<PlayerStateException>(() => player.Start());
@@ -209,19 +213,57 @@ namespace HttpMockPlayer.Tests
         [Test]
         public void Start_AcceptsRequests()
         {
+            using (var socket = new Socket(SocketType.Stream, ProtocolType.Tcp))
+            {
+                TestDelegate connectTest = () => socket.Connect(baseAddress.Host, baseAddress.Port);
 
+                SocketException ex = Assert.Throws<SocketException>(connectTest);
+
+                Assert.AreEqual(ex.SocketErrorCode, SocketError.ConnectionRefused);
+
+                player.Start();
+
+                Assert.DoesNotThrow(connectTest);
+            }
         }
 
         [Test]
         public void Load_HasStarted_CanChangeCassette()
         {
+            player.Start();
+            player.Load(cassette1);
+            player.Play("record1");
 
+            var client = new Client(baseAddress);
+
+            using (var response = (HttpWebResponse)client.Get("/"))
+            {
+                Assert.AreEqual(response.Headers["X-Request-Id"], "request1_record1_cassette1");
+            }
+
+            player.Stop();
+            player.Load(cassette2);
+            player.Play("record1");
+
+            using (var response = (HttpWebResponse)client.Get("/"))
+            {
+                Assert.AreEqual(response.Headers["X-Request-Id"], "request1_record1_cassette2");
+            }
         }
 
         [Test]
         public void Idle_IncomingRequest_ResponsesWithPlayerError()
         {
-            //response has status 550
+            player.Start();
+
+            var client = new Client(baseAddress);
+            var ex = Assert.Throws<WebException>(() => client.Get("/anypath"));
+
+            using (var response = (HttpWebResponse)ex.Response)
+            {
+                Assert.AreEqual((int)response.StatusCode, 550);
+                Assert.AreEqual(response.StatusDescription, "Player exception");
+            }
         }
 
         [Test]
@@ -300,7 +342,15 @@ namespace HttpMockPlayer.Tests
         [Test]
         public void Close_NotAcceptsRequests()
         {
+            player.Start();
+            player.Close();
 
+            using (var socket = new Socket(SocketType.Stream, ProtocolType.Tcp))
+            {
+                var ex = Assert.Throws<SocketException>(() => socket.Connect(baseAddress.Host, baseAddress.Port));
+
+                Assert.AreEqual(ex.SocketErrorCode, SocketError.ConnectionRefused);
+            }
         }
 
         [Test]

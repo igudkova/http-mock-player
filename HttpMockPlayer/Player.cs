@@ -22,8 +22,8 @@ namespace HttpMockPlayer
         private Cassette cassette;
         private Record record;
 
-        // mutex object, used to avoid collisions when processing an incoming request 
-        // according to the current player state, or updating the player state value
+        // mutex object, used to avoid collisions when processing 
+        // an incoming request or updating the player state value
         private object statelock;
 
         /// <summary>
@@ -106,7 +106,7 @@ namespace HttpMockPlayer
 
             internal string Method { get; private set; }
 
-            internal string Path { get; private set; }
+            internal string Uri { get; private set; }
 
             internal string Content { get; private set; }
 
@@ -123,7 +123,7 @@ namespace HttpMockPlayer
                 var jrequest = new JObject();
 
                 jrequest.Add("method", Method);
-                jrequest.Add("path", Path);
+                jrequest.Add("uri", Uri);
 
                 if (Content != null)
                 {
@@ -168,7 +168,7 @@ namespace HttpMockPlayer
                 var mockRequest = new MockRequest()
                 {
                     Method = jrequest["method"].ToString(),
-                    Path = jrequest["path"].ToString()
+                    Uri = jrequest["uri"].ToString()
                 };
 
                 if (jrequest["content"] != null)
@@ -207,12 +207,12 @@ namespace HttpMockPlayer
                 return mockRequest;
             }
 
-            internal static MockRequest FromHttpRequest(string host, HttpListenerRequest request)
+            internal static MockRequest FromHttpRequest(Uri address, HttpListenerRequest request)
             {
                 var mockRequest = new MockRequest()
                 {
                     Method = request.HttpMethod,
-                    Path = request.Url.PathAndQuery
+                    Uri = address.OriginalString
                 };
 
                 if (request.HasEntityBody)
@@ -226,7 +226,7 @@ namespace HttpMockPlayer
 
                 if (request.ContentEncoding != null)
                 {
-                    mockRequest.ContentEncoding = request.ContentEncoding.EncodingName;
+                    mockRequest.ContentEncoding = request.ContentEncoding.WebName;
                 }
 
                 if (request.ContentType != null)
@@ -240,7 +240,7 @@ namespace HttpMockPlayer
 
                     if (request.Headers["Host"] != null)
                     {
-                        mockRequest.Headers["Host"] = host;
+                        mockRequest.Headers["Host"] = address.Host;
                     }
                 }
 
@@ -259,7 +259,7 @@ namespace HttpMockPlayer
                     return false;
                 }
 
-                if(!string.Equals(Path, mockRequest.Path))
+                if(!string.Equals(Uri, mockRequest.Uri))
                 {
                     return false;
                 }
@@ -279,19 +279,35 @@ namespace HttpMockPlayer
                     return false;
                 }
 
-                if((Headers == null) != (mockRequest.Headers == null))
+                NameValueCollection headers = null;
+
+                // presence of Connection=Keep-Alive header is not persistent and depends on request order,
+                // so it is skipped if there's no corresponding header in live request
+                if(Headers != null)
+                {
+                    headers = new NameValueCollection(Headers);
+
+                    if (headers["Connection"] == "Keep-Alive" &&
+                        mockRequest.Headers != null &&
+                        mockRequest.Headers["Connection"] == null)
+                    {
+                        headers.Remove("Connection");
+                    }
+                }
+
+                if((headers == null) != (mockRequest.Headers == null))
                 {
                     return false;
                 }
-                if (Headers != null)
+                if (headers != null)
                 {
-                    if (Headers.Count != mockRequest.Headers.Count)
+                    if (headers.Count != mockRequest.Headers.Count)
                     {
                         return false;
                     }
-                    foreach (string header in Headers)
+                    foreach (string header in headers)
                     {
-                        if (!string.Equals(Headers[header], mockRequest.Headers[header]))
+                        if (!string.Equals(headers[header], mockRequest.Headers[header]))
                         {
                             return false;
                         }
@@ -357,7 +373,7 @@ namespace HttpMockPlayer
 
             public override int GetHashCode()
             {
-                return Tuple.Create(Method, Path, Content).GetHashCode();
+                return Tuple.Create(Method, Uri, Content).GetHashCode();
             }
         }
 
@@ -545,7 +561,7 @@ namespace HttpMockPlayer
 
         private HttpWebRequest BuildRequest(MockRequest mockRequest)
         {
-            var request = WebRequest.CreateHttp(new Uri(remoteAddress, mockRequest.Path));
+            var request = WebRequest.CreateHttp(new Uri(remoteAddress, mockRequest.Uri));
 
             request.Method = mockRequest.Method;
 
@@ -755,7 +771,7 @@ namespace HttpMockPlayer
                                         {
                                             var mock = (JObject)record.Read();
                                             var mockRequest = MockRequest.FromJson((JObject)mock["request"]);
-                                            var mockPlayerRequest = MockRequest.FromHttpRequest(remoteAddress.Host, playerRequest);
+                                            var mockPlayerRequest = MockRequest.FromHttpRequest(remoteAddress, playerRequest);
 
                                             MockResponse mockResponse;
 
@@ -774,7 +790,7 @@ namespace HttpMockPlayer
                                         break;
                                     case State.Recording:
                                         {
-                                            var mockRequest = MockRequest.FromHttpRequest(remoteAddress.Host, playerRequest);
+                                            var mockRequest = MockRequest.FromHttpRequest(remoteAddress, playerRequest);
                                             var request = BuildRequest(mockRequest);
 
                                             MockResponse mockResponse;

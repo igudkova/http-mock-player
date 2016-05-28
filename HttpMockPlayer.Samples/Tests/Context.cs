@@ -32,7 +32,7 @@ namespace HttpMockPlayer.Samples.Tests
         [OneTimeSetUp]
         public void SetUp()
         {
-            var baseAddress = new Uri("http://localhost:5555");
+            var baseAddress = new Uri("http://localhost:5555/");
             var remoteAddress = new Uri("https://api.github.com");
 
             Player = new Player(baseAddress, remoteAddress);

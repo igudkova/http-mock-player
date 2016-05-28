@@ -1,0 +1,89 @@
+[
+  {
+    "name": "record1",
+    "requests": [
+      {
+        "request": {
+          "method": "GET",
+          "uri": "https://localhost:5560",
+          "contentEncoding": "Windows-1252",
+          "headers": {
+            "Connection": "Keep-Alive",
+            "Host": "localhost"
+          }
+        },
+        "response": {
+          "statusCode": 200,
+          "statusDescription": "OK",
+          "content": "record1 from cassette1",
+          "contentType": "text/plain; charset=utf-8",
+          "headers": {
+            "Status": "200 OK",
+            "X-Request-Id": "request1_record1_cassette1",
+            "Content-Length": "22",
+            "Cache-Control": "public, max-age=60, s-maxage=60",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Date": "Fri, 20 May 2016 09:13:18 GMT",
+            "Server": "localhost"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "GET",
+          "uri": "https://localhost:5560/wrong/path",
+          "contentEncoding": "Windows-1252",
+          "headers": {
+            "Connection": "Keep-Alive",
+            "Host": "localhost:5560"
+          }
+        },
+        "response": {
+          "statusCode": 404,
+          "statusDescription": "Not Found",
+          "content": {
+            "message": "Not Found"
+          },
+          "contentEncoding": "",
+          "contentType": "application/json; charset=utf-8",
+          "headers": {
+            "Status": "404 Not Found",
+            "X-Test-Request-Id": "BC0273E6:2CB9:1FBFFEB:572C7D2F",
+            "Content-Length": "24",
+            "Content-Type": "application/json; charset=utf-8",
+            "Date": "Fri, 20 May 2016 09:13:23 GMT",
+            "Server": "localhost"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "record2",
+    "requests": [
+      {
+        "request": {
+          "method": "GET",
+          "uri": "https://localhost:5560/user",
+          "headers": {
+            "Connection": "Keep-Alive",
+            "Host": "api.host.com"
+          }
+        },
+        "response": {
+          "statusCode": 200,
+          "statusDescription": "OK",
+          "content": "content",
+          "contentType": "text/plain; charset=utf-8",
+          "headers": {
+            "Status": "200 OK",
+            "Content-Length": "7",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Date": "Fri, 21 May 2016 09:13:18 GMT",
+            "Server": "host.com"
+          }
+        }
+      }
+    ]
+  }
+]

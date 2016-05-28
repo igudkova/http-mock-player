@@ -5,55 +5,51 @@
       {
         "request": {
           "method": "GET",
-          "path": "",
-          "contentEncoding": "Western European (Windows)",
+          "uri": "https://localhost:5560",
+          "contentEncoding": "Windows-1252",
           "headers": {
             "Connection": "Keep-Alive",
-            "Host": "api.test.com"
+            "Host": "localhost"
           }
         },
         "response": {
           "statusCode": 200,
           "statusDescription": "OK",
-          "content": "content string",
-          "contentEncoding": "",
+          "content": "record1 from cassette2",
           "contentType": "text/plain; charset=utf-8",
           "headers": {
             "Status": "200 OK",
-            "X-Test-Request-Id": "BC02555A:7F92:7E1B257:573E80CE",
-            "Content-Length": "14",
-            "Cache-Control": "public, max-age=60, s-maxage=60",
+            "X-Request-Id": "request1_record1_cassette2",
+            "Content-Length": "22",
             "Content-Type": "text/plain; charset=utf-8",
-            "Date": "Fri, 20 May 2016 09:13:18 GMT",
-            "Server": "test.com"
+            "Date": "Wed, 25 May 2016 11:13:11 GMT",
+            "Server": "localhost"
           }
         }
       },
       {
         "request": {
           "method": "GET",
-          "path": "/wrong/path",
-          "contentEncoding": "Western European (Windows)",
+          "uri": "https://localhost:5560/any/path",
+          "contentEncoding": "Windows-1252",
           "headers": {
             "Connection": "Keep-Alive",
-            "Host": "api.test.com"
+            "Host": "localhost"
           }
         },
         "response": {
           "statusCode": 404,
           "statusDescription": "Not Found",
-          "content": {
-            "message": "Not Found"
-          },
-          "contentEncoding": "",
-          "contentType": "application/json; charset=utf-8",
+          "content": "",
+          "contentEncoding": "gzip",
+          "contentType": "text/html; charset=UTF-8",
           "headers": {
             "Status": "404 Not Found",
-            "X-Test-Request-Id": "BC0273E6:2CB9:1FBFFEB:572C7D2F",
             "Content-Length": "24",
-            "Content-Type": "application/json; charset=utf-8",
-            "Date": "Fri, 20 May 2016 09:13:23 GMT",
-            "Server": "test.com"
+            "Content-Type": "text/html; charset=UTF-8",
+            "Date": "Fri, 31 May 2016 19:13:23 GMT",
+            "Expires": "Tue, 31 May 2016 19:13:23 GMT",
+            "Server": "localhost"
           }
         }
       }
@@ -65,7 +61,7 @@
       {
         "request": {
           "method": "GET",
-          "path": "/username",
+          "uri": "https://localhost:5560/test",
           "headers": {
             "Connection": "Keep-Alive",
             "Host": "api.host.com"
@@ -75,13 +71,12 @@
           "statusCode": 200,
           "statusDescription": "OK",
           "content": "content",
-          "contentEncoding": "",
           "contentType": "text/plain; charset=utf-8",
           "headers": {
             "Status": "200 OK",
             "Content-Length": "7",
             "Content-Type": "text/plain; charset=utf-8",
-            "Date": "Fri, 21 May 2016 09:13:18 GMT",
+            "Date": "Sat, 21 May 2016 09:13:18 GMT",
             "Server": "host.com"
           }
         }
