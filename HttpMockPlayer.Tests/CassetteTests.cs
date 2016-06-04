@@ -33,7 +33,7 @@ namespace HttpMockPlayer.Tests
             var record1 = cassette.Records[0];
 
             Assert.AreEqual(record1.Name, "record1");
-            Assert.AreEqual(record1.List.Count, 2);
+            Assert.AreEqual(record1.List.Count, 3);
 
             var record2 = cassette.Records[1];
 
@@ -44,7 +44,7 @@ namespace HttpMockPlayer.Tests
         [Test]
         public void Initialize_InvalidFile_Throws()
         {
-            Assert.Throws<CassetteException>(() => new Cassette(Context.Cassette3));
+            Assert.Throws<CassetteException>(() => new Cassette(Context.Cassette4));
         }
 
         [Test]
@@ -86,7 +86,7 @@ namespace HttpMockPlayer.Tests
             var record1 = anotherCassette.Records[0];
 
             Assert.AreEqual(record1.Name, "record1");
-            Assert.AreEqual(record1.List.Count, 2);
+            Assert.AreEqual(record1.List.Count, 3);
 
             var record2 = anotherCassette.Records[1];
 
@@ -160,7 +160,7 @@ namespace HttpMockPlayer.Tests
 
             Assert.IsNotNull(record);
             Assert.AreEqual(record.Name, "record1");
-            Assert.AreEqual(record.List.Count, 2);
+            Assert.AreEqual(record.List.Count, 3);
         }
 
         [Test]

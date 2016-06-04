@@ -5,8 +5,7 @@
       {
         "request": {
           "method": "GET",
-          "uri": "https://localhost:5560",
-          "contentEncoding": "Windows-1252",
+          "uri": "https://localhost:5560/",
           "headers": {
             "Connection": "Keep-Alive",
             "Host": "localhost"
@@ -31,7 +30,6 @@
         "request": {
           "method": "GET",
           "uri": "https://localhost:5560/any/path",
-          "contentEncoding": "Windows-1252",
           "headers": {
             "Connection": "Keep-Alive",
             "Host": "localhost"

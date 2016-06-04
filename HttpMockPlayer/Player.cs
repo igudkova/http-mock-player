@@ -110,10 +110,6 @@ namespace HttpMockPlayer
 
             internal string Content { get; private set; }
 
-            internal string ContentEncoding { get; private set; }
-
-            internal string ContentType { get; private set; }
-
             internal NameValueCollection Headers { get; private set; }
 
             internal CookieCollection Cookies { get; private set; }
@@ -128,16 +124,6 @@ namespace HttpMockPlayer
                 if (Content != null)
                 {
                     jrequest.Add("content", Content);
-                }
-
-                if (ContentEncoding != null)
-                {
-                    jrequest.Add("contentEncoding", ContentEncoding);
-                }
-
-                if(ContentType != null)
-                { 
-                    jrequest.Add("contentType", ContentType);
                 }
 
                 if (Headers != null)
@@ -176,16 +162,6 @@ namespace HttpMockPlayer
                     mockRequest.Content = jrequest["content"].ToString();
                 }
 
-                if (jrequest["contentEncoding"] != null)
-                {
-                    mockRequest.ContentEncoding = jrequest["contentEncoding"].ToString();
-                }
-
-                if (jrequest["contentType"] != null)
-                { 
-                    mockRequest.ContentType = jrequest["contentType"].ToString();
-                }
-
                 if (jrequest["headers"] != null)
                 {
                     mockRequest.Headers = new NameValueCollection();
@@ -198,40 +174,30 @@ namespace HttpMockPlayer
                 if (jrequest["cookies"] != null)
                 {
                     mockRequest.Cookies = new CookieCollection();
-                    foreach (JProperty jcookie in jrequest["cookies"])
+                    foreach (JObject jcookie in jrequest["cookies"])
                     {
-                        mockRequest.Cookies.Add(new Cookie(jcookie.Name, jcookie.Value.ToString()));
+                        mockRequest.Cookies.Add(jcookie.ToObject<Cookie>());
                     }
                 }
 
                 return mockRequest;
             }
 
-            internal static MockRequest FromHttpRequest(Uri address, HttpListenerRequest request)
+            internal static MockRequest FromHttpRequest(Uri uri, HttpListenerRequest request)
             {
                 var mockRequest = new MockRequest()
                 {
                     Method = request.HttpMethod,
-                    Uri = address.OriginalString
+                    Uri = uri.OriginalString + request.Url.PathAndQuery
                 };
 
                 if (request.HasEntityBody)
                 {
                     using (var stream = request.InputStream)
-                    using (var reader = new StreamReader(stream, request.ContentEncoding ?? Encoding.UTF8))
+                    using (var reader = new StreamReader(stream, request.ContentEncoding))
                     {
                         mockRequest.Content = reader.ReadToEnd();
                     }
-                }
-
-                if (request.ContentEncoding != null)
-                {
-                    mockRequest.ContentEncoding = request.ContentEncoding.WebName;
-                }
-
-                if (request.ContentType != null)
-                {
-                    mockRequest.ContentType = request.ContentType;
                 }
 
                 if(request.Headers != null && request.Headers.Count > 0)
@@ -240,7 +206,7 @@ namespace HttpMockPlayer
 
                     if (request.Headers["Host"] != null)
                     {
-                        mockRequest.Headers["Host"] = address.Host;
+                        mockRequest.Headers["Host"] = uri.Host;
                     }
                 }
 
@@ -269,20 +235,10 @@ namespace HttpMockPlayer
                     return false;
                 }
 
-                if (!string.Equals(ContentEncoding, mockRequest.ContentEncoding))
-                {
-                    return false;
-                }
-
-                if (!string.Equals(ContentType, mockRequest.ContentType))
-                {
-                    return false;
-                }
-
                 NameValueCollection headers = null;
 
                 // presence of Connection=Keep-Alive header is not persistent and depends on request order,
-                // so it is skipped if there's no corresponding header in live request
+                // so it is skipped if there's no corresponding header in the live request
                 if(Headers != null)
                 {
                     headers = new NameValueCollection(Headers);
@@ -565,29 +521,6 @@ namespace HttpMockPlayer
 
             request.Method = mockRequest.Method;
 
-            if (mockRequest.Content != null)
-            {
-                Encoding contentEncoding;
-                if(mockRequest.ContentEncoding == null)
-                {
-                    contentEncoding = Encoding.UTF8;
-                }
-                else
-                {
-                    contentEncoding = Encoding.GetEncoding(mockRequest.ContentEncoding);
-                }
-
-                byte[] content = contentEncoding.GetBytes(mockRequest.Content);
-                using (var stream = request.GetRequestStream())
-                {
-                    stream.Write(content, 0, content.Length);
-                }
-
-                request.ContentLength = content.Length;
-            }
-
-            request.ContentType = mockRequest.ContentType;
-
             if (mockRequest.Headers != null)
             {
                 foreach (string header in mockRequest.Headers)
@@ -647,10 +580,22 @@ namespace HttpMockPlayer
                 }
             }
 
-            if(mockRequest.Cookies != null)
+            if (mockRequest.Cookies != null)
             {
                 request.CookieContainer = new CookieContainer();
                 request.CookieContainer.Add(mockRequest.Cookies);
+            }
+
+            if (mockRequest.Content != null)
+            {
+                byte[] content = Encoding.Default.GetBytes(mockRequest.Content);
+
+                request.ContentLength = content.Length;
+
+                using (var stream = request.GetRequestStream())
+                {
+                    stream.Write(content, 0, content.Length);
+                }
             }
 
             return request;

@@ -1,6 +1,68 @@
 ﻿[
   {
-    "name": "noname",
-    "value": "invalid cassette file"
+    "name": "badrecord",
+    "requests": [
+      {
+        "request": "",
+        "response": ""
+      }
+    ]
+  },
+  {
+    "name": "record1",
+    "requests": [
+      {
+        "request": {
+          "method": "GET",
+          "uri": "https://localhost:5560/request1",
+          "headers": {
+            "Connection": "Keep-Alive",
+            "Host": "localhost"
+          }
+        },
+        "response": { }
+      },
+      {
+        "request": {
+          "method": "POST",
+          "uri": "https://localhost:5560/request2",
+          "content":  "content",
+          "headers": {
+            "Content-Length": "7",
+            "Expect": "100-continue",
+            "Host": "localhost"
+          }
+        },
+        "response": { }
+      },
+      {
+        "request": {
+          "method": "GET",
+          "uri": "https://localhost:5560/request3",
+          "headers": {
+            "Host": "localhost",
+            "Custom-Header": "value"
+          }
+        },
+        "response": { }
+      },
+      {
+        "request": {
+          "method": "GET",
+          "uri": "https://localhost:5560/request4",
+          "headers": {
+            "Host": "localhost",
+            "Cookie": "cookie1=value"
+          },
+          "cookies": [
+            {
+              "Name": "cookie1",
+              "Value": "value"
+            }
+          ]
+        },
+        "response": { }
+      }
+    ]
   }
 ]

@@ -63,6 +63,19 @@ namespace HttpMockPlayer.Tests
             }
         }
 
+        public static string Cassette4
+        {
+            get
+            {
+                var src = $"{assemblyDirectoryName}/../../Cassettes/cassette4.json";
+                var dest = $"{Path}/cassette4.json";
+
+                File.Copy(src, dest, true);
+
+                return dest;
+            }
+        }
+
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {

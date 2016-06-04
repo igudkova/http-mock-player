@@ -5,8 +5,7 @@
       {
         "request": {
           "method": "GET",
-          "uri": "https://localhost:5560",
-          "contentEncoding": "Windows-1252",
+          "uri": "https://localhost:5560/",
           "headers": {
             "Connection": "Keep-Alive",
             "Host": "localhost"
@@ -32,10 +31,9 @@
         "request": {
           "method": "GET",
           "uri": "https://localhost:5560/wrong/path",
-          "contentEncoding": "Windows-1252",
           "headers": {
             "Connection": "Keep-Alive",
-            "Host": "localhost:5560"
+            "Host": "localhost"
           }
         },
         "response": {
@@ -44,14 +42,41 @@
           "content": {
             "message": "Not Found"
           },
-          "contentEncoding": "",
           "contentType": "application/json; charset=utf-8",
           "headers": {
             "Status": "404 Not Found",
-            "X-Test-Request-Id": "BC0273E6:2CB9:1FBFFEB:572C7D2F",
+            "X-Request-Id": "request2_record1_cassette1",
             "Content-Length": "24",
             "Content-Type": "application/json; charset=utf-8",
             "Date": "Fri, 20 May 2016 09:13:23 GMT",
+            "Server": "localhost"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "GET",
+          "uri": "https://localhost:5560/request3",
+          "headers": {
+            "Connection": "Keep-Alive",
+            "Host": "localhost"
+          }
+        },
+        "response": {
+          "statusCode": 200,
+          "statusDescription": "OK",
+          "content": {
+            "id": 123,
+            "name": "anyname" 
+          },
+          "contentType": "application/json; charset=utf-8",
+          "headers": {
+            "Status": "200 OK",
+            "X-Request-Id": "request3_record1_cassette1",
+            "Content-Length": "32",
+            "Cache-Control": "public, max-age=60, s-maxage=60",
+            "Content-Type": "application/json; charset=utf-8",
+            "Date": "Sat, 21 May 2016 09:13:18 GMT",
             "Server": "localhost"
           }
         }
