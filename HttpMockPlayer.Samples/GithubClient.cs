@@ -27,7 +27,7 @@ namespace HttpMockPlayer.Samples
         public async Task<List<Repo>> GetRepos(string owner)
         {
             HttpResponseMessage res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"/users/{owner}/repos"));
-            string resString = await res.Content.ReadAsStringAsync();
+            var resString = await res.Content.ReadAsStringAsync();
 
             return JsonConvert.DeserializeObject<List<Repo>>(resString);
         }
@@ -35,14 +35,14 @@ namespace HttpMockPlayer.Samples
         public async Task<Repo> GetRepo(string owner, string repo)
         {
             HttpResponseMessage res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"repos/{owner}/{repo}"));
-            string resString = await res.Content.ReadAsStringAsync();
+            var resString = await res.Content.ReadAsStringAsync();
 
             return JsonConvert.DeserializeObject<Repo>(resString);
         }
 
         public async Task<string> CreateRepo(string repo, string description)
         {
-            HttpResponseMessage res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Post, "user/repos"));
+            var res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Post, "user/repos"));
 
             return await res.Content.ReadAsStringAsync();
         }
@@ -53,21 +53,21 @@ namespace HttpMockPlayer.Samples
 
         public async Task<string> GetCommits(string owner, string repo)
         {
-            HttpResponseMessage res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"repos/{owner}/{repo}/commits"));
+            var res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"repos/{owner}/{repo}/commits"));
 
             return await res.Content.ReadAsStringAsync();
         }
 
         public async Task<string> GetCommit(string owner, string repo, string sha)
         {
-            HttpResponseMessage res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"repos/{owner}/{repo}/commits"));
+            var res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"repos/{owner}/{repo}/commits"));
 
             return await res.Content.ReadAsStringAsync();
         }
 
         public async Task<string> CreateCommit(string owner, string repo, string message, string tree, string parents)
         {
-            HttpResponseMessage res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Post, "repos/" + owner + "/" + repo + "/commits"));
+            var res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Post, "repos/" + owner + "/" + repo + "/commits"));
 
             return await res.Content.ReadAsStringAsync();
         }

@@ -28,17 +28,17 @@ namespace HttpMockPlayer.Tests
         {
             var cassette = new Cassette(Context.Cassette1);
 
-            Assert.AreEqual(cassette.Records.Count, 2);
+            Assert.AreEqual(2, cassette.Records.Count);
 
             var record1 = cassette.Records[0];
 
-            Assert.AreEqual(record1.Name, "record1");
-            Assert.AreEqual(record1.List.Count, 3);
+            Assert.AreEqual("record1", record1.Name);
+            Assert.AreEqual(3, record1.List.Count);
 
             var record2 = cassette.Records[1];
 
-            Assert.AreEqual(record2.Name, "record2");
-            Assert.AreEqual(record2.List.Count, 1);
+            Assert.AreEqual("record2", record2.Name);
+            Assert.AreEqual(1, record2.List.Count);
         }
 
         [Test]
@@ -61,12 +61,12 @@ namespace HttpMockPlayer.Tests
 
             var anotherCassette = new Cassette(cassette.Path);
 
-            Assert.AreEqual(anotherCassette.Records.Count, 1);
+            Assert.AreEqual(1, anotherCassette.Records.Count);
 
             record = anotherCassette.Records[0];
 
-            Assert.AreEqual(record.Name, "record");
-            Assert.AreEqual(record.List.Count, 1);
+            Assert.AreEqual("record", record.Name);
+            Assert.AreEqual(1, record.List.Count);
         }
 
         [Test]
@@ -81,22 +81,22 @@ namespace HttpMockPlayer.Tests
 
             var anotherCassette = new Cassette(cassette.Path);
 
-            Assert.AreEqual(anotherCassette.Records.Count, 3);
+            Assert.AreEqual(3, anotherCassette.Records.Count);
 
             var record1 = anotherCassette.Records[0];
 
-            Assert.AreEqual(record1.Name, "record1");
-            Assert.AreEqual(record1.List.Count, 3);
+            Assert.AreEqual("record1", record1.Name);
+            Assert.AreEqual(3, record1.List.Count);
 
             var record2 = anotherCassette.Records[1];
 
-            Assert.AreEqual(record2.Name, "record2");
-            Assert.AreEqual(record2.List.Count, 1);
+            Assert.AreEqual("record2", record2.Name);
+            Assert.AreEqual(1, record2.List.Count);
 
             var record3 = anotherCassette.Records[2];
 
-            Assert.AreEqual(record3.Name, "record");
-            Assert.AreEqual(record.List.Count, 1);
+            Assert.AreEqual("record", record3.Name);
+            Assert.AreEqual(1, record.List.Count);
         }
 
         [Test]
@@ -104,7 +104,7 @@ namespace HttpMockPlayer.Tests
         {
             var cassette = new Cassette(Context.Cassette1);
 
-            Assert.AreEqual(cassette.Records.Count, 2);
+            Assert.AreEqual(2, cassette.Records.Count);
 
             var record = new Record("record");
             var request = JObject.Parse("{\"request\":{},\"response\":{}}");
@@ -112,12 +112,12 @@ namespace HttpMockPlayer.Tests
             record.Write(request);
             cassette.Save(record);
 
-            Assert.AreEqual(cassette.Records.Count, 3);
+            Assert.AreEqual(3, cassette.Records.Count);
 
             var lastRecord = cassette.Records[2];
 
-            Assert.AreEqual(lastRecord.Name, "record");
-            Assert.AreEqual(lastRecord.List.Count, 1);
+            Assert.AreEqual("record", lastRecord.Name);
+            Assert.AreEqual(1, lastRecord.List.Count);
         }
 
         [Test]
@@ -159,8 +159,8 @@ namespace HttpMockPlayer.Tests
             var record = cassette.Find("record1");
 
             Assert.IsNotNull(record);
-            Assert.AreEqual(record.Name, "record1");
-            Assert.AreEqual(record.List.Count, 3);
+            Assert.AreEqual("record1", record.Name);
+            Assert.AreEqual(3, record.List.Count);
         }
 
         [Test]

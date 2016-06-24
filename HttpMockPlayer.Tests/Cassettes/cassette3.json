@@ -14,23 +14,49 @@
       {
         "request": {
           "method": "GET",
-          "uri": "https://localhost:5560/request1",
+          "uri": "http://localhost:5560/request1",
           "headers": {
             "Connection": "Keep-Alive",
-            "Host": "localhost"
+            "Host": "localhost:5560"
           }
         },
-        "response": { }
+        "response": {
+          "statusCode": 200,
+          "statusDescription": "OK",
+          "content": "record1 från cassette3",
+          "headers": {
+            "Status": "200 OK",
+            "Connection": "Keep-Alive",
+            "Location": "http://test.com/redirect-url",
+            "X-Request-Id": "request1_record1_cassette3",
+            "Cache-Control": "public, max-age=60, s-maxage=60",
+            "Content-Type": "text/plain; charset=utf-8",
+            "Content-Encoding": "gzip",
+            "Transfer-Encoding": "chunked",
+            "Date": "Fri, 20 May 2016 09:13:18 GMT",
+            "Server": "localhost"
+          },
+          "cookies": [
+            {
+              "Name": "cookie1",
+              "Value": "value1"
+            },
+            {
+              "Name": "cookie2",
+              "Value": "value2"
+            }
+          ]
+        }
       },
       {
         "request": {
           "method": "POST",
-          "uri": "https://localhost:5560/request2",
+          "uri": "http://localhost:5560/request2",
           "content":  "content",
           "headers": {
             "Content-Length": "7",
             "Expect": "100-continue",
-            "Host": "localhost"
+            "Host": "localhost:5560"
           }
         },
         "response": { }
@@ -38,9 +64,9 @@
       {
         "request": {
           "method": "GET",
-          "uri": "https://localhost:5560/request3",
+          "uri": "http://localhost:5560/request3",
           "headers": {
-            "Host": "localhost",
+            "Host": "localhost:5560",
             "Custom-Header": "value"
           }
         },
@@ -49,15 +75,16 @@
       {
         "request": {
           "method": "GET",
-          "uri": "https://localhost:5560/request4",
+          "uri": "http://localhost:5560/request4",
           "headers": {
-            "Host": "localhost",
+            "Host": "localhost:5560",
             "Cookie": "cookie1=value"
           },
           "cookies": [
             {
               "Name": "cookie1",
-              "Value": "value"
+              "Value": "value",
+              "Domain": "localhost"
             }
           ]
         },

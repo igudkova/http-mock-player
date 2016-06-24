@@ -34,7 +34,7 @@ namespace HttpMockPlayer.Tests
 
             record.Write(obj);
 
-            Assert.AreEqual(record.List.Count, 1);
+            Assert.AreEqual(1, record.List.Count);
             Assert.AreEqual(obj, record.List[0]);
         }
 
@@ -55,7 +55,7 @@ namespace HttpMockPlayer.Tests
 
             record.WriteRange(array);
 
-            Assert.AreEqual(record.List.Count, 3);
+            Assert.AreEqual(3, record.List.Count);
             Assert.AreEqual(array, record.List);
         }
 

@@ -23,7 +23,68 @@ namespace HttpMockPlayer.Tests
             {
                 foreach (string header in headers)
                 {
-                    request.Headers[header] = headers[header];
+                    var value = headers[header];
+
+                    switch (header)
+                    {
+                        case "Accept":
+                            request.Accept = value;
+                            break;
+                        case "Connection":
+                            if (value.ToLower() == "keep-alive")
+                            {
+                                request.KeepAlive = true;
+                            }
+                            else if (value.ToLower() == "close")
+                            {
+                                request.KeepAlive = false;
+                            }
+                            else
+                            {
+                                request.Connection = value;
+                            }
+                            break;
+                        case "Content-Length":
+                            request.ContentLength = long.Parse(value);
+                            break;
+                        case "Content-Type":
+                            request.ContentType = value;
+                            break;
+                        case "Date":
+                            request.Date = DateTime.Parse(value);
+                            break;
+                        case "Expect":
+                            if (value.ToLower() != "100-continue")
+                            {
+                                request.Expect = value;
+                            }
+                            break;
+                        case "Host":
+                            request.Host = value;
+                            break;
+                        case "If-Modified-Since":
+                            request.IfModifiedSince = DateTime.Parse(value);
+                            break;
+                        case "Referer":
+                            request.Referer = value;
+                            break;
+                        case "Transfer-Encoding":
+                            if (value.ToLower() == "chunked")
+                            {
+                                request.SendChunked = true;
+                            }
+                            else
+                            {
+                                request.TransferEncoding = value;
+                            }
+                            break;
+                        case "User-Agent":
+                            request.UserAgent = value;
+                            break;
+                        default:
+                            request.Headers[header] = value;
+                            break;
+                    }
                 }
             }
 
@@ -35,7 +96,7 @@ namespace HttpMockPlayer.Tests
 
             if (content != null)
             {
-                byte[] data = Encoding.Default.GetBytes(content);
+                var data = Encoding.Default.GetBytes(content);
 
                 request.ContentLength = data.Length;
 

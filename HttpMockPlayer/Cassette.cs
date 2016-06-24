@@ -35,11 +35,11 @@ namespace HttpMockPlayer
 
         private void WriteToFile()
         {
-            JArray jrecords = new JArray();
+            var jrecords = new JArray();
 
             foreach (var record in Records)
             {
-                JArray jrequests = new JArray();
+                var jrequests = new JArray();
 
                 for (var request = record.Read(); request != null; request = record.Read())
                 {

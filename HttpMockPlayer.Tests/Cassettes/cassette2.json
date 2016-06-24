@@ -5,10 +5,10 @@
       {
         "request": {
           "method": "GET",
-          "uri": "https://localhost:5560/",
+          "uri": "http://localhost:5560/",
           "headers": {
             "Connection": "Keep-Alive",
-            "Host": "localhost"
+            "Host": "localhost:5560"
           }
         },
         "response": {
@@ -29,10 +29,10 @@
       {
         "request": {
           "method": "GET",
-          "uri": "https://localhost:5560/any/path",
+          "uri": "http://localhost:5560/any/path",
           "headers": {
             "Connection": "Keep-Alive",
-            "Host": "localhost"
+            "Host": "localhost:5560"
           }
         },
         "response": {
@@ -59,10 +59,10 @@
       {
         "request": {
           "method": "GET",
-          "uri": "https://localhost:5560/test",
+          "uri": "http://localhost:5560/test",
           "headers": {
             "Connection": "Keep-Alive",
-            "Host": "api.host.com"
+            "Host": "localhost:5560"
           }
         },
         "response": {

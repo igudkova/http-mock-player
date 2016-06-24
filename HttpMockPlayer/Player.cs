@@ -7,6 +7,8 @@ using System.Collections.Specialized;
 using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Linq;
+using System.Dynamic;
 
 [assembly: InternalsVisibleTo("HttpMockPlayer.Tests")]
 
@@ -141,7 +143,46 @@ namespace HttpMockPlayer
                     var jcookies = new JArray();
                     foreach (Cookie cookie in Cookies)
                     {
-                        jcookies.Add(cookie);
+                        dynamic jcookie = new ExpandoObject();
+
+                        jcookie.Name = cookie.Name;
+                        jcookie.Value = cookie.Value;
+                        jcookie.Domain = cookie.Domain;
+
+                        if (!string.IsNullOrEmpty(cookie.Comment))
+                        {
+                            jcookie.Comment = cookie.Comment;
+                        }
+                        if (cookie.CommentUri != null)
+                        {
+                            jcookie.CommentUri = cookie.CommentUri;
+                        }
+                        if(cookie.Discard)
+                        {
+                            jcookie.Discard = cookie.Discard;
+                        }
+                        if (cookie.Expired)
+                        {
+                            jcookie.Expired = cookie.Expired;
+                        }
+                        if (cookie.Expires != DateTime.MinValue)
+                        {
+                            jcookie.Expires = cookie.Expires;
+                        }
+                        if (!string.IsNullOrEmpty(cookie.Path))
+                        {
+                            jcookie.Path = cookie.Path;
+                        }
+                        if (!string.IsNullOrEmpty(cookie.Port))
+                        {
+                            jcookie.Port = cookie.Port;
+                        }
+                        if (cookie.Secure)
+                        {
+                            jcookie.Secure = cookie.Secure;
+                        }
+
+                        jcookies.Add(JToken.FromObject(jcookie));
                     }
                     jrequest.Add("cookies", jcookies);
                 }
@@ -202,17 +243,22 @@ namespace HttpMockPlayer
 
                 if(request.Headers != null && request.Headers.Count > 0)
                 {
-                    mockRequest.Headers = request.Headers;
+                    mockRequest.Headers = new NameValueCollection(request.Headers);
 
                     if (request.Headers["Host"] != null)
                     {
-                        mockRequest.Headers["Host"] = uri.Host;
+                        mockRequest.Headers["Host"] = uri.Authority;
                     }
                 }
 
                 if(request.Cookies != null && request.Cookies.Count > 0)
                 {
-                    mockRequest.Cookies = request.Cookies;
+                    mockRequest.Cookies = new CookieCollection { request.Cookies };
+
+                    foreach (Cookie cookie in mockRequest.Cookies)
+                    {
+                        cookie.Domain = uri.Host;
+                    }
                 }
 
                 return mockRequest;
@@ -343,10 +389,6 @@ namespace HttpMockPlayer
 
             internal string Content { get; private set; }
 
-            internal string ContentEncoding { get; private set; }
-
-            internal string ContentType { get; private set; }
-
             internal WebHeaderCollection Headers { get; private set; }
 
             internal CookieCollection Cookies { get; private set; }
@@ -371,16 +413,6 @@ namespace HttpMockPlayer
                     }
                 }
 
-                if(ContentEncoding != null)
-                {
-                    jresponse.Add("contentEncoding", ContentEncoding);
-                }
-
-                if (ContentType != null)
-                {
-                    jresponse.Add("contentType", ContentType);
-                }
-
                 if (Headers != null)
                 {
                     var jheaders = new JObject();
@@ -396,7 +428,47 @@ namespace HttpMockPlayer
                     var jcookies = new JArray();
                     foreach (Cookie cookie in Cookies)
                     {
-                        jcookies.Add(cookie);
+                        dynamic jcookie = new ExpandoObject();
+
+                        jcookie.Name = cookie.Name;
+                        jcookie.Value = cookie.Value;
+                        jcookie.Domain = cookie.Domain;
+
+                        if (!string.IsNullOrEmpty(cookie.Comment))
+                        {
+                            jcookie.Comment = cookie.Comment;
+                        }
+                        if (cookie.CommentUri != null)
+                        {
+                            jcookie.CommentUri = cookie.CommentUri;
+                        }
+                        if (cookie.Discard)
+                        {
+                            jcookie.Discard = cookie.Discard;
+                        }
+                        if (cookie.Expired)
+                        {
+                            jcookie.Expired = cookie.Expired;
+                        }
+                        if (cookie.Expires != DateTime.MinValue)
+                        {
+                            jcookie.Expires = cookie.Expires;
+                        }
+                        if (!string.IsNullOrEmpty(cookie.Path))
+                        {
+                            jcookie.Path = cookie.Path;
+                        }
+                        if (!string.IsNullOrEmpty(cookie.Port))
+                        {
+                            jcookie.Port = cookie.Port;
+                        }
+                        if (cookie.Secure)
+                        {
+                            jcookie.Secure = cookie.Secure;
+                        }
+
+                        jcookies.Add(JToken.FromObject(jcookie));
+
                     }
                     jresponse.Add("cookies", jcookies);
                 }
@@ -417,16 +489,6 @@ namespace HttpMockPlayer
                     mockResponse.Content = jresponse["content"].ToString();
                 }
 
-                if (jresponse["contentEncoding"] != null)
-                {
-                    mockResponse.ContentEncoding = jresponse["contentEncoding"].ToString();
-                }
-
-                if (jresponse["contentType"] != null)
-                {
-                    mockResponse.ContentType = jresponse["contentType"].ToString();
-                }
-
                 if (jresponse["headers"] != null)
                 {
                     mockResponse.Headers = new WebHeaderCollection();
@@ -439,9 +501,9 @@ namespace HttpMockPlayer
                 if (jresponse["cookies"] != null)
                 {
                     mockResponse.Cookies = new CookieCollection();
-                    foreach (JProperty jcookie in jresponse["cookies"])
+                    foreach (JObject jcookie in jresponse["cookies"])
                     {
-                        mockResponse.Cookies.Add(new Cookie(jcookie.Name, jcookie.Value.ToString()));
+                        mockResponse.Cookies.Add(jcookie.ToObject<Cookie>());
                     }
                 }
 
@@ -463,7 +525,7 @@ namespace HttpMockPlayer
                         Encoding contentEncoding;
                         if (string.IsNullOrEmpty(response.ContentEncoding))
                         {
-                            contentEncoding = Encoding.UTF8;
+                            contentEncoding = Encoding.Default;
                         }
                         else
                         {
@@ -475,16 +537,6 @@ namespace HttpMockPlayer
                             mockResponse.Content = reader.ReadToEnd();
                         }
                     }
-                }
-
-                if (!string.IsNullOrEmpty(response.ContentEncoding))
-                {
-                    mockResponse.ContentEncoding = response.ContentEncoding;
-                }
-
-                if (response.ContentType != null)
-                {
-                    mockResponse.ContentType = response.ContentType;
                 }
 
                 if(response.Headers != null && response.Headers.Count > 0)
@@ -517,7 +569,7 @@ namespace HttpMockPlayer
 
         private HttpWebRequest BuildRequest(MockRequest mockRequest)
         {
-            var request = WebRequest.CreateHttp(new Uri(remoteAddress, mockRequest.Uri));
+            var request = WebRequest.CreateHttp(new Uri(mockRequest.Uri));
 
             request.Method = mockRequest.Method;
 
@@ -525,7 +577,7 @@ namespace HttpMockPlayer
             {
                 foreach (string header in mockRequest.Headers)
                 {
-                    string value = mockRequest.Headers[header];
+                    var value = mockRequest.Headers[header];
 
                     switch (header)
                     {
@@ -556,7 +608,15 @@ namespace HttpMockPlayer
                             request.Date = DateTime.Parse(value);
                             break;
                         case "Expect":
-                            request.Expect = value;
+                            var list = value.Split(',');
+                            var values = list.Where(v => v != "100-continue");
+
+                            value = string.Join(",", values);
+
+                            if (!string.IsNullOrEmpty(value))
+                            {
+                                request.Expect = value;
+                            }
                             break;
                         case "Host":
                             request.Host = value;
@@ -568,7 +628,14 @@ namespace HttpMockPlayer
                             request.Referer = value;
                             break;
                         case "Transfer-Encoding":
-                            request.TransferEncoding = value;
+                            if (value.ToLower() == "chunked")
+                            {
+                                request.SendChunked = true;
+                            }
+                            else
+                            {
+                                request.TransferEncoding = value;
+                            }
                             break;
                         case "User-Agent":
                             request.UserAgent = value;
@@ -588,7 +655,7 @@ namespace HttpMockPlayer
 
             if (mockRequest.Content != null)
             {
-                byte[] content = Encoding.Default.GetBytes(mockRequest.Content);
+                var content = Encoding.Default.GetBytes(mockRequest.Content);
 
                 request.ContentLength = content.Length;
 
@@ -612,16 +679,18 @@ namespace HttpMockPlayer
             {
                 foreach (string header in mockResponse.Headers)
                 {
-                    string value = mockResponse.Headers[header];
+                    var value = mockResponse.Headers[header];
 
                     switch (header)
                     {
                         case "Connection":
                             response.KeepAlive = (value.ToLower() == "keep-alive");
                             break;
-                        case "Content-Encoding":
                         case "Content-Length":
+                            response.ContentLength64 = int.Parse(value);
+                            break;
                         case "Content-Type":
+                            response.ContentType = value;
                             break;
                         case "Location":
                             response.RedirectLocation = value;
@@ -638,27 +707,9 @@ namespace HttpMockPlayer
 
             response.Cookies = mockResponse.Cookies;
 
-            response.ContentType = mockResponse.ContentType;
-
-            if (mockResponse.ContentEncoding == null)
+            if (mockResponse.Content != null)
             {
-                response.ContentEncoding = null;
-            }
-            else
-            {
-                response.ContentEncoding = Encoding.GetEncoding(mockResponse.ContentEncoding);
-            }
-
-            if (mockResponse.Content == null)
-            {
-                response.ContentLength64 = 0;
-            }
-            else
-            {
-                var contentEncoding = response.ContentEncoding ?? Encoding.UTF8;
-                var content = contentEncoding.GetBytes(mockResponse.Content);
-
-                response.ContentLength64 = content.Length;
+                var content = Encoding.Default.GetBytes(mockResponse.Content);
 
                 using (var stream = response.OutputStream)
                 {
@@ -702,9 +753,9 @@ namespace HttpMockPlayer
                 {
                     while (httpListener.IsListening)
                     {
-                        HttpListenerContext context = httpListener.GetContext();
-                        HttpListenerRequest playerRequest = context.Request;
-                        HttpListenerResponse playerResponse = context.Response;
+                        var context = httpListener.GetContext();
+                        var playerRequest = context.Request;
+                        var playerResponse = context.Response;
 
                         lock (statelock)
                         {
@@ -749,6 +800,11 @@ namespace HttpMockPlayer
                                             }
                                             catch (WebException ex)
                                             {
+                                                if(ex.Response == null)
+                                                {
+                                                    throw ex;
+                                                }
+
                                                 mockResponse = MockResponse.FromHttpResponse((HttpWebResponse)ex.Response);
                                             }
 
@@ -920,12 +976,24 @@ namespace HttpMockPlayer
         {
             lock (statelock)
             {
-                if (httpListener != null)
+                if (CurrentState != State.Off)
                 {
-                    httpListener.Close();
-                }
+                    if (CurrentState != State.Idle)
+                    {
+                        record.Rewind();
 
-                CurrentState = State.Off;
+                        if (CurrentState == State.Recording)
+                        {
+                            cassette.Save(record);
+                        }
+
+                        record = null;
+                    }
+
+                    httpListener.Close();
+
+                    CurrentState = State.Off;
+                }
             }
         }
     }
