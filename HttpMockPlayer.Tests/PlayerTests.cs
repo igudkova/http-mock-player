@@ -320,7 +320,7 @@ namespace HttpMockPlayer.Tests
                 Assert.AreEqual("utf-8", response.CharacterSet);
 
                 using (var stream = response.GetResponseStream())
-                using (var reader = new StreamReader(stream, Encoding.Default))
+                using (var reader = new StreamReader(stream, Encoding.UTF8))
                 {
                     var content = reader.ReadToEnd();
                     Assert.AreEqual("record1 från cassette3", content);
@@ -607,8 +607,8 @@ namespace HttpMockPlayer.Tests
                     Assert.AreEqual("text/plain; charset=ascii", response.ContentType);
                     Assert.AreEqual("ascii", response.CharacterSet);
 
-                    Assert.AreEqual("us-ascii", response.ContentEncoding);
                     Assert.AreEqual("us-ascii", response.Headers["Content-Encoding"]);
+                    Assert.AreEqual("us-ascii", response.ContentEncoding);
 
                     Assert.AreEqual("http://test.com", response.Headers["Location"]);
                     Assert.AreEqual("close", response.Headers["Connection"]);
@@ -663,6 +663,30 @@ namespace HttpMockPlayer.Tests
                 Assert.AreEqual(552, (int)response.StatusCode);
                 Assert.AreEqual("Player exception", response.StatusDescription);
             }
+
+            player.Stop();
+        }
+
+        [Test]
+        public void Recording_EmptyRecord_NotSaved()
+        {
+            var path = Context.CassetteNew;
+
+            player.Start();
+            player.Load(new Cassette(path));
+            player.Record("record1");
+
+            var client = new Client(baseAddress);
+
+            try
+            {
+                client.Send("/", "GET");
+            }
+            catch { }
+
+            player.Stop();
+
+            Assert.IsFalse(File.Exists(path));
         }
 
         [Test]

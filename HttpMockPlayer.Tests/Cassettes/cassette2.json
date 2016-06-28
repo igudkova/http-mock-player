@@ -15,7 +15,6 @@
           "statusCode": 200,
           "statusDescription": "OK",
           "content": "record1 from cassette2",
-          "contentType": "text/plain; charset=utf-8",
           "headers": {
             "Status": "200 OK",
             "X-Request-Id": "request1_record1_cassette2",
@@ -38,12 +37,10 @@
         "response": {
           "statusCode": 404,
           "statusDescription": "Not Found",
-          "content": "",
-          "contentEncoding": "gzip",
-          "contentType": "text/html; charset=UTF-8",
+          "content": "Resource not found",
           "headers": {
             "Status": "404 Not Found",
-            "Content-Length": "24",
+            "Content-Length": "18",
             "Content-Type": "text/html; charset=UTF-8",
             "Date": "Fri, 31 May 2016 19:13:23 GMT",
             "Expires": "Tue, 31 May 2016 19:13:23 GMT",

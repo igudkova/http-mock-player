@@ -17,6 +17,11 @@ namespace HttpMockPlayer
             Name = name;
         }
 
+        internal bool IsEmpty()
+        {
+            return List.Count == 0;
+        }
+
         internal object Read()
         {
             if(Enumerator.MoveNext())

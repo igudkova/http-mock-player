@@ -96,7 +96,7 @@ namespace HttpMockPlayer.Tests
 
             if (content != null)
             {
-                var data = Encoding.Default.GetBytes(content);
+                var data = Encoding.UTF8.GetBytes(content);
 
                 request.ContentLength = data.Length;
 

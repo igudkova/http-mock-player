@@ -1,10 +1,11 @@
 ﻿using System.Threading.Tasks;
+using System.Net.Http;
 using NUnit.Framework;
 
 namespace HttpMockPlayer.Samples.Tests
 {
     [TestFixture]
-    class RepoTests
+    public class RepoTests
     {
         Cassette cassette;
         GithubClient client;
@@ -20,15 +21,15 @@ namespace HttpMockPlayer.Samples.Tests
         }
 
         // parameterized SetUp attribute is not supported by NUnit
-        public void SetUp(string recordName)
+        public void SetUp(string record)
         {
-            if (cassette.Contains(recordName))
+            if (cassette.Contains(record))
             {
-                Context.Player.Play(recordName);
+                Context.Player.Play(record);
             }
             else
             {
-                Context.Player.Record(recordName);
+                Context.Player.Record(record);
             }
         }
 
@@ -38,38 +39,43 @@ namespace HttpMockPlayer.Samples.Tests
             Context.Player.Stop();
         }
 
-        [Test, Description("Successfully retrieves list of repos")]
-        public async Task GetRepos_Succeeds()
+        [Test]
+        public async Task GetRepo_ReturnsRepo()
         {
-            SetUp("GetRepos_Succeeds");
+            SetUp("GetRepo_ReturnsRepo");
 
-            var repos = await client.GetRepos("igudkova");
-            Assert.IsNotEmpty(repos);
+            var repo = await client.GetRepo("igudkova", "http-mock-player");
+
+            Assert.IsNotNull(repo);
+            Assert.AreEqual("http-mock-player", repo.Name);
         }
 
-        public void GetRepos_WrongOwner_ReturnsNotFound()
+        [Test]
+        public void GetRepo_WrongParams_Throws()
         {
+            SetUp("GetRepo_WrongParams_Throws");
 
+            Assert.ThrowsAsync<HttpRequestException>(async () => await client.GetRepo("ас-пушкин", "евгений-онегин"));
+            Assert.ThrowsAsync<HttpRequestException>(async () => await client.GetRepo("igudkova", "nonexistent-repo"));
         }
 
-        public void GetRepo_Succeeds()
+        [Test]
+        public async Task GetRepoLanguages_ReturnsLanguagesList()
         {
+            SetUp("GetRepoLanguages_ReturnsLanguagesList");
 
+            var languages = await client.GetRepoLanguages("igudkova", "http-mock-player");
+
+            Assert.AreEqual(1, languages.Count);
+            Assert.AreEqual("C#", languages[0]);
         }
 
-        public void GetRepo_WrongOwner_ReturnsNotFound()
+        [Test]
+        public void CreateRepo_Unauthorized_Throws()
         {
+            SetUp("CreateRepo_Unauthorized_Throws");
 
-        }
-
-        public void GetRepo_WrongRepo_ReturnsNotFound()
-        {
-
-        }
-
-        public void CreateRepo_NotLoggedIn_ReturnsUnauthorized()
-        {
-
+            Assert.ThrowsAsync<HttpRequestException>(async () => await client.CreateRepo("new-repo", "my new shiny repository"));
         }
     }
 }

@@ -52,9 +52,9 @@
         "request": {
           "method": "POST",
           "uri": "http://localhost:5560/request2",
-          "content":  "content",
+          "content":  "content på svenska",
           "headers": {
-            "Content-Length": "7",
+            "Content-Length": "18",
             "Expect": "100-continue",
             "Host": "localhost:5560"
           }

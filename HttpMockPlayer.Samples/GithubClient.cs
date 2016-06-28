@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using System.Linq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace HttpMockPlayer.Samples
 {
@@ -15,6 +17,26 @@ namespace HttpMockPlayer.Samples
     {
         private HttpClient httpClient;
 
+        private async Task<T> Get<T>(string path)
+        {
+            var res = await httpClient.GetAsync(path);
+            res.EnsureSuccessStatusCode();
+
+            var resString = await res.Content.ReadAsStringAsync();
+
+            return JsonConvert.DeserializeObject<T>(resString);
+        }
+
+        private async Task<T> Post<T>(string path, string content)
+        {
+            var res = await httpClient.PostAsync(path, new StringContent(content));
+            res.EnsureSuccessStatusCode();
+
+            var resString = await res.Content.ReadAsStringAsync();
+
+            return JsonConvert.DeserializeObject<T>(resString);
+        }
+
         public GithubClient(Uri baseAddress)
         {
             httpClient = new HttpClient();
@@ -24,52 +46,39 @@ namespace HttpMockPlayer.Samples
 
         #region Repo
 
-        public async Task<List<Repo>> GetRepos(string owner)
-        {
-            HttpResponseMessage res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"/users/{owner}/repos"));
-            var resString = await res.Content.ReadAsStringAsync();
-
-            return JsonConvert.DeserializeObject<List<Repo>>(resString);
-        }
-
         public async Task<Repo> GetRepo(string owner, string repo)
         {
-            HttpResponseMessage res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"repos/{owner}/{repo}"));
-            var resString = await res.Content.ReadAsStringAsync();
-
-            return JsonConvert.DeserializeObject<Repo>(resString);
+            return await Get<Repo>($"repos/{owner}/{repo}");
         }
 
-        public async Task<string> CreateRepo(string repo, string description)
+        public async Task<List<string>> GetRepoLanguages(string owner, string repo)
         {
-            var res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Post, "user/repos"));
+            var languages = await Get<JObject>($"repos/{owner}/{repo}/languages");
+            
+            var list = from JProperty language in languages.Children()
+                       select language.Name;
 
-            return await res.Content.ReadAsStringAsync();
+            return list.ToList();
+        } 
+
+        public async Task<Repo> CreateRepo(string name, string description)
+        {
+            var repo = new
+            {
+                name = name,
+                description = description
+            };
+
+            return await Post<Repo>("/user/repos", JsonConvert.SerializeObject(repo));
         }
 
         #endregion
 
-        #region Commit
+        #region Activity
 
-        public async Task<string> GetCommits(string owner, string repo)
+        public async Task<List<Repo>> GetWatchedRepos(string owner)
         {
-            var res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"repos/{owner}/{repo}/commits"));
-
-            return await res.Content.ReadAsStringAsync();
-        }
-
-        public async Task<string> GetCommit(string owner, string repo, string sha)
-        {
-            var res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"repos/{owner}/{repo}/commits"));
-
-            return await res.Content.ReadAsStringAsync();
-        }
-
-        public async Task<string> CreateCommit(string owner, string repo, string message, string tree, string parents)
-        {
-            var res = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Post, "repos/" + owner + "/" + repo + "/commits"));
-
-            return await res.Content.ReadAsStringAsync();
+            return await Get<List<Repo>>($"users/{owner}/subscriptions");
         }
 
         #endregion

@@ -55,7 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Repo.cs" />
-    <Compile Include="Tests\CommitTests.cs" />
+    <Compile Include="Tests\ActivityTests.cs" />
     <Compile Include="Tests\Context.cs" />
     <Compile Include="Tests\RepoTests.cs" />
     <Compile Include="GithubClient.cs" />
