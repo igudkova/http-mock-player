@@ -20,9 +20,11 @@ namespace HttpMockPlayer.Samples.Tests
             client = new GithubClient(Context.Player.BaseAddress);
         }
 
-        // parameterized SetUp attribute is not supported by NUnit
-        public void SetUp(string record)
+        [SetUp]
+        public void SetUp()
         {
+            var record = TestContext.CurrentContext.Test.Name;
+
             if (cassette.Contains(record))
             {
                 Context.Player.Play(record);
@@ -42,8 +44,6 @@ namespace HttpMockPlayer.Samples.Tests
         [Test]
         public async Task GetRepo_ReturnsRepo()
         {
-            SetUp("GetRepo_ReturnsRepo");
-
             var repo = await client.GetRepo("igudkova", "http-mock-player");
 
             Assert.IsNotNull(repo);
@@ -53,8 +53,6 @@ namespace HttpMockPlayer.Samples.Tests
         [Test]
         public void GetRepo_WrongParams_Throws()
         {
-            SetUp("GetRepo_WrongParams_Throws");
-
             Assert.ThrowsAsync<HttpRequestException>(async () => await client.GetRepo("ас-пушкин", "евгений-онегин"));
             Assert.ThrowsAsync<HttpRequestException>(async () => await client.GetRepo("igudkova", "nonexistent-repo"));
         }
@@ -62,8 +60,6 @@ namespace HttpMockPlayer.Samples.Tests
         [Test]
         public async Task GetRepoLanguages_ReturnsLanguagesList()
         {
-            SetUp("GetRepoLanguages_ReturnsLanguagesList");
-
             var languages = await client.GetRepoLanguages("igudkova", "http-mock-player");
 
             Assert.AreEqual(1, languages.Count);
@@ -73,8 +69,6 @@ namespace HttpMockPlayer.Samples.Tests
         [Test]
         public void CreateRepo_Unauthorized_Throws()
         {
-            SetUp("CreateRepo_Unauthorized_Throws");
-
             Assert.ThrowsAsync<HttpRequestException>(async () => await client.CreateRepo("new-repo", "my new shiny repository"));
         }
     }

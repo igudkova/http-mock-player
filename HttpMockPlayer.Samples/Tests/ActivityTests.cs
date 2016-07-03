@@ -20,9 +20,11 @@ namespace HttpMockPlayer.Samples.Tests
             client = new GithubClient(Context.Player.BaseAddress);
         }
 
-        // parameterized SetUp attribute is not supported by NUnit
-        public void SetUp(string record)
+        [SetUp]
+        public void SetUp()
         {
+            var record = TestContext.CurrentContext.Test.Name;
+
             if (cassette.Contains(record))
             {
                 Context.Player.Play(record);
@@ -42,8 +44,6 @@ namespace HttpMockPlayer.Samples.Tests
         [Test]
         public async Task GetWatchedRepos_ReturnsReposList()
         {
-            SetUp("GetWatchedRepos_ReturnsReposList");
-
             var watched = await client.GetWatchedRepos("igudkova");
 
             Assert.IsNotEmpty(watched);
@@ -52,8 +52,6 @@ namespace HttpMockPlayer.Samples.Tests
         [Test]
         public void GetWatchedRepos_WrongOwner_Throws()
         {
-            SetUp("GetWatchedRepos_WrongOwner_Throws");
-
             Assert.ThrowsAsync<HttpRequestException>(async () => await client.GetWatchedRepos("white space"));
         }
     }
