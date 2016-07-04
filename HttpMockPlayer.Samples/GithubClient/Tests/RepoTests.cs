@@ -2,22 +2,22 @@
 using System.Net.Http;
 using NUnit.Framework;
 
-namespace HttpMockPlayer.Samples.Tests
+namespace HttpMockPlayer.Samples.GithubClient.Tests
 {
     [TestFixture]
     public class RepoTests
     {
         Cassette cassette;
-        GithubClient client;
+        Client client;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
-            cassette = new Cassette($"{Context.AssemblyDirectoryName}/../../Tests/Mock/Http/Repo.json");
+            cassette = new Cassette($"{Context.AssemblyDirectoryName}/../../GithubClient/Tests/Mock/Http/Repo.json");
 
             Context.Player.Load(cassette);
 
-            client = new GithubClient(Context.Player.BaseAddress);
+            client = new Client(Context.Player.BaseAddress);
         }
 
         [SetUp]

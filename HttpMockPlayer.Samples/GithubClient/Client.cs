@@ -7,13 +7,13 @@ using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace HttpMockPlayer.Samples
+namespace HttpMockPlayer.Samples.GithubClient
 {
     /// <summary>
     /// Implements sample GitHub API client.
     /// <see cref="https://developer.github.com/v3/"/>
     /// </summary>
-    public class GithubClient
+    public class Client
     {
         private HttpClient httpClient;
 
@@ -37,7 +37,7 @@ namespace HttpMockPlayer.Samples
             return JsonConvert.DeserializeObject<T>(resString);
         }
 
-        public GithubClient(Uri baseAddress)
+        public Client(Uri baseAddress)
         {
             httpClient = new HttpClient();
             httpClient.BaseAddress = baseAddress;

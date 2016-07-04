@@ -1,7 +1,7 @@
 ﻿using System;
 using Newtonsoft.Json;
 
-namespace HttpMockPlayer.Samples
+namespace HttpMockPlayer.Samples.GithubClient
 {
     public class Repo
     {

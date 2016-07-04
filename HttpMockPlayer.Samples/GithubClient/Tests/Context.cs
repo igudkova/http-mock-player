@@ -3,7 +3,7 @@ using System.IO;
 using System.Reflection;
 using NUnit.Framework;
 
-namespace HttpMockPlayer.Samples.Tests
+namespace HttpMockPlayer.Samples.GithubClient.Tests
 {
     [SetUpFixture]
     public class Context

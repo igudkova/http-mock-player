@@ -36,9 +36,9 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="HttpMockPlayer, Version=0.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\HttpMockPlayer\packages\HttpMockPlayer.0.1.0\HttpMockPlayer.dll</HintPath>
+    <Reference Include="HttpMockPlayer, Version=0.1.1.0, Culture=neutral, PublicKeyToken=8b2fda724fd40ce6, processorArchitecture=MSIL">
+      <HintPath>..\HttpMockPlayer\packages\HttpMockPlayer.0.1.1\lib\net45\HttpMockPlayer.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\HttpMockPlayer\packages\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -58,11 +58,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Repo.cs" />
-    <Compile Include="Tests\ActivityTests.cs" />
-    <Compile Include="Tests\Context.cs" />
-    <Compile Include="Tests\RepoTests.cs" />
-    <Compile Include="GithubClient.cs" />
+    <Compile Include="GithubClient\Repo.cs" />
+    <Compile Include="GithubClient\Tests\ActivityTests.cs" />
+    <Compile Include="GithubClient\Tests\Context.cs" />
+    <Compile Include="GithubClient\Tests\RepoTests.cs" />
+    <Compile Include="GithubClient\Client.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
