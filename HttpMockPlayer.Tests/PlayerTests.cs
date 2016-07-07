@@ -663,8 +663,6 @@ namespace HttpMockPlayer.Tests
                 Assert.AreEqual(552, (int)response.StatusCode);
                 Assert.AreEqual("Player exception", response.StatusDescription);
             }
-
-            player.Stop();
         }
 
         [Test]

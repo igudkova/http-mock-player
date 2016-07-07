@@ -44,7 +44,7 @@ namespace HttpMockPlayer.Samples.GithubClient.Tests
         [Test]
         public async Task GetRepo_ReturnsRepo()
         {
-            var repo = await client.GetRepo("igudkova", "http-mock-player");
+            var repo = await client.GetRepoAsync("igudkova", "http-mock-player");
 
             Assert.IsNotNull(repo);
             Assert.AreEqual("http-mock-player", repo.Name);
@@ -53,14 +53,14 @@ namespace HttpMockPlayer.Samples.GithubClient.Tests
         [Test]
         public void GetRepo_WrongParams_Throws()
         {
-            Assert.ThrowsAsync<HttpRequestException>(async () => await client.GetRepo("ас-пушкин", "евгений-онегин"));
-            Assert.ThrowsAsync<HttpRequestException>(async () => await client.GetRepo("igudkova", "nonexistent-repo"));
+            Assert.ThrowsAsync<HttpRequestException>(async () => await client.GetRepoAsync("ас-пушкин", "евгений-онегин"));
+            Assert.ThrowsAsync<HttpRequestException>(async () => await client.GetRepoAsync("igudkova", "nonexistent-repo"));
         }
 
         [Test]
         public async Task GetRepoLanguages_ReturnsLanguagesList()
         {
-            var languages = await client.GetRepoLanguages("igudkova", "http-mock-player");
+            var languages = await client.GetRepoLanguagesAsync("igudkova", "http-mock-player");
 
             Assert.AreEqual(1, languages.Count);
             Assert.AreEqual("C#", languages[0]);
@@ -69,7 +69,7 @@ namespace HttpMockPlayer.Samples.GithubClient.Tests
         [Test]
         public void CreateRepo_Unauthorized_Throws()
         {
-            Assert.ThrowsAsync<HttpRequestException>(async () => await client.CreateRepo("new-repo", "my new shiny repository"));
+            Assert.ThrowsAsync<HttpRequestException>(async () => await client.CreateRepoAsync("new-repo", "my new shiny repository"));
         }
     }
 }

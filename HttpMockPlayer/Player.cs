@@ -11,6 +11,9 @@ using System.Net.Mime;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
+// Signed assemblies cannot build on Travis, because the key file is not committed.
+// [assembly: InternalsVisibleTo("HttpMockPlayer.Tests, PublicKey=002400000480000094000000060200000024000052534131000400000100010027ff4de06098a639e8c798c860211683b8899f1db89df350b838ea986efc79986e743667171fd42826e9cac176c831ce4809bb3800d5dcfdb6c5467e30fd2db34d8e6e5970ccfdc2f99a6ae0247ae430a1ecafc1e984d53323b22191a2b23af7318faa9525c57e1025ffbf30beaaac6f4fc269f621aa88bc9127ea446b0e8394")]
+
 [assembly: InternalsVisibleTo("HttpMockPlayer.Tests")]
 
 namespace HttpMockPlayer

@@ -10,14 +10,14 @@ using Newtonsoft.Json.Linq;
 namespace HttpMockPlayer.Samples.GithubClient
 {
     /// <summary>
-    /// Implements sample GitHub API client.
+    /// Implements a sample GitHub API client.
     /// <see cref="https://developer.github.com/v3/"/>
     /// </summary>
     public class Client
     {
         private HttpClient httpClient;
 
-        private async Task<T> Get<T>(string path)
+        private async Task<T> GetAsync<T>(string path)
         {
             var res = await httpClient.GetAsync(path);
             res.EnsureSuccessStatusCode();
@@ -27,7 +27,7 @@ namespace HttpMockPlayer.Samples.GithubClient
             return JsonConvert.DeserializeObject<T>(resString);
         }
 
-        private async Task<T> Post<T>(string path, string content)
+        private async Task<T> PostAsync<T>(string path, string content)
         {
             var res = await httpClient.PostAsync(path, new StringContent(content));
             res.EnsureSuccessStatusCode();
@@ -46,14 +46,14 @@ namespace HttpMockPlayer.Samples.GithubClient
 
         #region Repo
 
-        public async Task<Repo> GetRepo(string owner, string repo)
+        public async Task<Repo> GetRepoAsync(string owner, string repo)
         {
-            return await Get<Repo>($"repos/{owner}/{repo}");
+            return await GetAsync<Repo>($"repos/{owner}/{repo}");
         }
 
-        public async Task<List<string>> GetRepoLanguages(string owner, string repo)
+        public async Task<List<string>> GetRepoLanguagesAsync(string owner, string repo)
         {
-            var languages = await Get<JObject>($"repos/{owner}/{repo}/languages");
+            var languages = await GetAsync<JObject>($"repos/{owner}/{repo}/languages");
             
             var list = from JProperty language in languages.Children()
                        select language.Name;
@@ -61,7 +61,7 @@ namespace HttpMockPlayer.Samples.GithubClient
             return list.ToList();
         } 
 
-        public async Task<Repo> CreateRepo(string name, string description)
+        public async Task<Repo> CreateRepoAsync(string name, string description)
         {
             var repo = new
             {
@@ -69,16 +69,16 @@ namespace HttpMockPlayer.Samples.GithubClient
                 description = description
             };
 
-            return await Post<Repo>("/user/repos", JsonConvert.SerializeObject(repo));
+            return await PostAsync<Repo>("/user/repos", JsonConvert.SerializeObject(repo));
         }
 
         #endregion
 
         #region Activity
 
-        public async Task<List<Repo>> GetWatchedRepos(string owner)
+        public async Task<List<Repo>> GetWatchedReposAsync(string owner)
         {
-            return await Get<List<Repo>>($"users/{owner}/subscriptions");
+            return await GetAsync<List<Repo>>($"users/{owner}/subscriptions");
         }
 
         #endregion

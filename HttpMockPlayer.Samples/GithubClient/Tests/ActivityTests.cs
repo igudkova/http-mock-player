@@ -44,7 +44,7 @@ namespace HttpMockPlayer.Samples.GithubClient.Tests
         [Test]
         public async Task GetWatchedRepos_ReturnsReposList()
         {
-            var watched = await client.GetWatchedRepos("igudkova");
+            var watched = await client.GetWatchedReposAsync("igudkova");
 
             Assert.IsNotEmpty(watched);
         }
@@ -52,7 +52,7 @@ namespace HttpMockPlayer.Samples.GithubClient.Tests
         [Test]
         public void GetWatchedRepos_WrongOwner_Throws()
         {
-            Assert.ThrowsAsync<HttpRequestException>(async () => await client.GetWatchedRepos("white space"));
+            Assert.ThrowsAsync<HttpRequestException>(async () => await client.GetWatchedReposAsync("white space"));
         }
     }
 }
