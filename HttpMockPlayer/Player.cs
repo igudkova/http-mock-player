@@ -118,8 +118,6 @@ namespace HttpMockPlayer
 
             internal NameValueCollection Headers { get; private set; }
 
-            internal CookieCollection Cookies { get; private set; }
-
             internal JObject ToJson()
             {
                 var jrequest = new JObject();
@@ -148,55 +146,6 @@ namespace HttpMockPlayer
                         jheaders.Add(header, Headers[header]);
                     }
                     jrequest.Add("headers", jheaders);
-                }
-
-                if (Cookies != null)
-                {
-                    var jcookies = new JArray();
-                    foreach (Cookie cookie in Cookies)
-                    {
-                        dynamic jcookie = new ExpandoObject();
-
-                        jcookie.Name = cookie.Name;
-                        jcookie.Value = cookie.Value;
-                        jcookie.Domain = cookie.Domain;
-
-                        if (!string.IsNullOrEmpty(cookie.Comment))
-                        {
-                            jcookie.Comment = cookie.Comment;
-                        }
-                        if (cookie.CommentUri != null)
-                        {
-                            jcookie.CommentUri = cookie.CommentUri;
-                        }
-                        if(cookie.Discard)
-                        {
-                            jcookie.Discard = cookie.Discard;
-                        }
-                        if (cookie.Expired)
-                        {
-                            jcookie.Expired = cookie.Expired;
-                        }
-                        if (cookie.Expires != DateTime.MinValue)
-                        {
-                            jcookie.Expires = cookie.Expires;
-                        }
-                        if (!string.IsNullOrEmpty(cookie.Path))
-                        {
-                            jcookie.Path = cookie.Path;
-                        }
-                        if (!string.IsNullOrEmpty(cookie.Port))
-                        {
-                            jcookie.Port = cookie.Port;
-                        }
-                        if (cookie.Secure)
-                        {
-                            jcookie.Secure = cookie.Secure;
-                        }
-
-                        jcookies.Add(JToken.FromObject(jcookie));
-                    }
-                    jrequest.Add("cookies", jcookies);
                 }
 
                 return jrequest;
@@ -231,15 +180,6 @@ namespace HttpMockPlayer
                     foreach (JProperty jheader in jrequest["headers"])
                     {
                         mockRequest.Headers.Add(jheader.Name, jheader.Value.ToString());
-                    }
-                }
-
-                if (jrequest["cookies"] != null)
-                {
-                    mockRequest.Cookies = new CookieCollection();
-                    foreach (JObject jcookie in jrequest["cookies"])
-                    {
-                        mockRequest.Cookies.Add(jcookie.ToObject<Cookie>());
                     }
                 }
 
@@ -283,16 +223,6 @@ namespace HttpMockPlayer
                     if (request.Headers["Host"] != null)
                     {
                         mockRequest.Headers["Host"] = uri.Authority;
-                    }
-                }
-
-                if(request.Cookies != null && request.Cookies.Count > 0)
-                {
-                    mockRequest.Cookies = new CookieCollection { request.Cookies };
-
-                    foreach (Cookie cookie in mockRequest.Cookies)
-                    {
-                        cookie.Domain = uri.Host;
                     }
                 }
 
@@ -356,25 +286,6 @@ namespace HttpMockPlayer
                     }
                 }
 
-                if ((Cookies == null) != (mockRequest.Cookies == null))
-                {
-                    return false;
-                }
-                if(Cookies != null)
-                {
-                    if (Cookies.Count != mockRequest.Cookies.Count)
-                    {
-                        return false;
-                    }
-                    foreach (Cookie cookie in Cookies)
-                    {
-                        if (!cookie.Equals(mockRequest.Cookies[cookie.Name]))
-                        {
-                            return false;
-                        }
-                    }
-                }
-
                 return true;
             }
 
@@ -431,8 +342,6 @@ namespace HttpMockPlayer
 
             internal WebHeaderCollection Headers { get; private set; }
 
-            internal CookieCollection Cookies { get; private set; }
-
             internal JObject ToJson()
             {
                 var jresponse = new JObject();
@@ -461,56 +370,6 @@ namespace HttpMockPlayer
                         jheaders.Add(header, Headers[header]);
                     }
                     jresponse.Add("headers", jheaders);
-                }
-
-                if (Cookies != null)
-                {
-                    var jcookies = new JArray();
-                    foreach (Cookie cookie in Cookies)
-                    {
-                        dynamic jcookie = new ExpandoObject();
-
-                        jcookie.Name = cookie.Name;
-                        jcookie.Value = cookie.Value;
-                        jcookie.Domain = cookie.Domain;
-
-                        if (!string.IsNullOrEmpty(cookie.Comment))
-                        {
-                            jcookie.Comment = cookie.Comment;
-                        }
-                        if (cookie.CommentUri != null)
-                        {
-                            jcookie.CommentUri = cookie.CommentUri;
-                        }
-                        if (cookie.Discard)
-                        {
-                            jcookie.Discard = cookie.Discard;
-                        }
-                        if (cookie.Expired)
-                        {
-                            jcookie.Expired = cookie.Expired;
-                        }
-                        if (cookie.Expires != DateTime.MinValue)
-                        {
-                            jcookie.Expires = cookie.Expires;
-                        }
-                        if (!string.IsNullOrEmpty(cookie.Path))
-                        {
-                            jcookie.Path = cookie.Path;
-                        }
-                        if (!string.IsNullOrEmpty(cookie.Port))
-                        {
-                            jcookie.Port = cookie.Port;
-                        }
-                        if (cookie.Secure)
-                        {
-                            jcookie.Secure = cookie.Secure;
-                        }
-
-                        jcookies.Add(JToken.FromObject(jcookie));
-
-                    }
-                    jresponse.Add("cookies", jcookies);
                 }
 
                 return jresponse;
@@ -545,15 +404,6 @@ namespace HttpMockPlayer
                     foreach (JProperty jheader in jresponse["headers"])
                     {
                         mockResponse.Headers.Add(jheader.Name, jheader.Value.ToString());
-                    }
-                }
-
-                if (jresponse["cookies"] != null)
-                {
-                    mockResponse.Cookies = new CookieCollection();
-                    foreach (JObject jcookie in jresponse["cookies"])
-                    {
-                        mockResponse.Cookies.Add(jcookie.ToObject<Cookie>());
                     }
                 }
 
@@ -592,11 +442,6 @@ namespace HttpMockPlayer
                 if(response.Headers != null && response.Headers.Count > 0)
                 {
                     mockResponse.Headers = response.Headers;
-                }
-
-                if(response.Cookies != null && response.Cookies.Count > 0)
-                {
-                    mockResponse.Cookies = response.Cookies;
                 }
 
                 return mockResponse;
@@ -696,12 +541,6 @@ namespace HttpMockPlayer
                 }
             }
 
-            if (mockRequest.Cookies != null)
-            {
-                request.CookieContainer = new CookieContainer();
-                request.CookieContainer.Add(mockRequest.Cookies);
-            }
-
             if (mockRequest.Content != null)
             {
                 var contentType = new ContentType(mockRequest.Headers?.Get("Content-Type") ?? "text/plain; charset=utf-8");
@@ -757,8 +596,6 @@ namespace HttpMockPlayer
                     }
                 }
             }
-
-            response.Cookies = mockResponse.Cookies;
 
             if (mockResponse.Content != null)
             {

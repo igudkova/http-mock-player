@@ -212,7 +212,7 @@ For a HTTP response its status code, status description, body data and headers a
     "Date": "Thu, 07 Jul 2016 01:06:49 GMT",
     "Expires": "Thu, 07 Jul 2016 01:06:50 GMT",
     "Last-Modified": "Thu, 07 Jul 2016 01:06:50 GMT",
-    "Set-Cookie": "yp=1470445610.ygu.1; Expires=Sun, 05-Jul-2026 01:06:49 GMT; Domain=.ya.ru; Path=/,yandex_gid=105422; Expires=Sat, 06-Aug-2016 01:06:49 GMT; Domain=.ya.ru; Path=/,yandexuid=1575635411467853610; Expires=Sun, 05-Jul-2026 01:06:49 GMT; Domain=.ya.ru; Path=/",
+    "Set-Cookie": "yp=1470445610.ygu.1; Expires=Sun, 05-Jul-2026 01:06:49 GMT; Domain=.ya.ru; Path=/",
     "Server": "nginx",
     "X-Frame-Options": "DENY"
   }
@@ -223,7 +223,7 @@ In certain cases `Player` object throws custom exceptions:
 * `CassetteException` if a cassette cannot be read or saved;
 * `PlayerStateException` if player is not in a valid state to start an operation (for instance, when `Play()` is not followed by `Stop()`, but instead another `Play()` is called)
 
-If an error occurs while processing a client request, the player wraps an exception into the response message. The status code in this case is set to 551 (play exception), 552 (record exception) or 550 (general player exception).
+If an error occurs while processing a client request, the player wraps it into the response message and sets the status code to 551 (play exception), 552 (record exception) or 550 (general player exception).
 ## Dependencies
 
 * [Newtonsoft.Json][newtonsoft]

@@ -34,18 +34,9 @@
             "Content-Encoding": "gzip",
             "Transfer-Encoding": "chunked",
             "Date": "Fri, 20 May 2016 09:13:18 GMT",
+            "Set-Cookie": "cookie1=value1, cookie2=value2",
             "Server": "localhost"
-          },
-          "cookies": [
-            {
-              "Name": "cookie1",
-              "Value": "value1"
-            },
-            {
-              "Name": "cookie2",
-              "Value": "value2"
-            }
-          ]
+          }
         }
       },
       {
@@ -79,14 +70,7 @@
           "headers": {
             "Host": "localhost:5560",
             "Cookie": "cookie1=value"
-          },
-          "cookies": [
-            {
-              "Name": "cookie1",
-              "Value": "value",
-              "Domain": "localhost"
-            }
-          ]
+          }
         },
         "response": { }
       }

@@ -805,14 +805,6 @@ namespace HttpMockPlayer.Tests
             Assert.AreEqual("http://test.com", jrequest["headers"]["Referer"].ToString());
             Assert.AreEqual("test client", jrequest["headers"]["User-Agent"].ToString());
 
-            Assert.AreEqual(2, ((JArray)jrequest["cookies"]).Count);
-            Assert.AreEqual("cookie1", jrequest["cookies"][0]["Name"].ToString());
-            Assert.AreEqual("value1", jrequest["cookies"][0]["Value"].ToString());
-            Assert.AreEqual("localhost", jrequest["cookies"][0]["Domain"].ToString());
-            Assert.AreEqual("cookie2", jrequest["cookies"][1]["Name"].ToString());
-            Assert.AreEqual("value2", jrequest["cookies"][1]["Value"].ToString());
-            Assert.AreEqual("localhost", jrequest["cookies"][1]["Domain"].ToString());
-
             Assert.AreEqual(200, (int)jresponse["statusCode"]);
             Assert.AreEqual("Hurrah!", jresponse["statusDescription"].ToString());
             Assert.AreEqual("response", jresponse["content"].ToString());
@@ -827,16 +819,6 @@ namespace HttpMockPlayer.Tests
             Assert.AreEqual("http://test.com", jresponse["headers"]["Location"].ToString());
             Assert.AreEqual("cookie1=value1, cookie2=value2", jresponse["headers"]["Set-Cookie"].ToString());
             Assert.IsNotNull(jresponse["headers"]["Server"]);
-
-            Assert.AreEqual(2, ((JArray)jresponse["cookies"]).Count);
-            Assert.AreEqual("cookie1", jresponse["cookies"][0]["Name"].ToString());
-            Assert.AreEqual("value1", jresponse["cookies"][0]["Value"].ToString());
-            Assert.AreEqual("localhost", jresponse["cookies"][0]["Domain"].ToString());
-            Assert.AreEqual("/path", jresponse["cookies"][0]["Path"].ToString());
-            Assert.AreEqual("cookie2", jresponse["cookies"][1]["Name"].ToString());
-            Assert.AreEqual("value2", jresponse["cookies"][1]["Value"].ToString());
-            Assert.AreEqual("localhost", jresponse["cookies"][1]["Domain"].ToString());
-            Assert.AreEqual("/path", jresponse["cookies"][1]["Path"].ToString());
         }
 
         [Test]
