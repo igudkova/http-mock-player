@@ -223,7 +223,7 @@ In certain cases `Player` object throws custom exceptions:
 * `CassetteException` if a cassette cannot be read or saved;
 * `PlayerStateException` if player is not in a valid state to start an operation (for instance, when `Play()` is not followed by `Stop()`, but instead another `Play()` is called)
 
-If an error occurs while processing a client request, the player wraps it into the response message and sets the status code to 551 (play exception), 552 (record exception) or 550 (general player exception).
+If an error occurs while processing a client request, the player wraps it into the response message and sets the status code to 454 (request mismatch), 551 (play exception), 552 (record exception) or 550 (general player exception).
 ## Dependencies
 
 * [Newtonsoft.Json][newtonsoft]

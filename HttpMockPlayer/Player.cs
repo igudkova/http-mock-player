@@ -828,6 +828,7 @@ namespace HttpMockPlayer
         /// <summary>
         /// Sets this instance to <see cref="State.Idle"/> state.
         /// </summary>
+        /// <exception cref="PlayerStateException"/>
         public void Stop()
         {
             lock (statelock)
