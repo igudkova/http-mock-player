@@ -633,6 +633,7 @@ namespace HttpMockPlayer
         /// <summary>
         /// Allows this instance to receive and process incoming requests.
         /// </summary>
+        /// <exception cref="PlayerStateException"/>
         public void Start()
         {
             lock (statelock)
