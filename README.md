@@ -153,7 +153,7 @@ Once run, this code generates a JSON file (`api-calls.json` as specified in the 
   }
 ]
 ```
-The `Player` object is initialized with the (local) base address, where it listens for client requests, and an address of a remote service, to which the requests are redirected when recording. Note that **the player does not intercept HTTP requests**, so the client should send its requests to the player's base address in order for them to be recorded or replayed. Remote address can be changed while the player runs, which makes it possible to test distributed web services.
+The `Player` object is initialized with the (local) base address, where it listens for client requests, and an address of a remote service, to which the requests are redirected when recording. Note that **the player serves as a forward proxy and does not intercept HTTP requests**, so the client should send its requests to the player's base address in order for them to be recorded or replayed. Remote address can be changed while the player runs, which makes it possible to test distributed web services.
 
 Check the [HttpMockPlayer.Samples][samples] project for more examples.
 
