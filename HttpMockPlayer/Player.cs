@@ -197,7 +197,7 @@ namespace HttpMockPlayer
                 if (request.HasEntityBody)
                 {
                     var contentType = new ContentType(request.Headers?.Get("Content-Type") ?? "text/plain; charset=utf-8");
-                    var encoding = Encoding.GetEncoding(contentType.CharSet ?? "utf-8");
+                    var encoding = GetEncoding(contentType.CharSet);
 
                     using (var stream = request.InputStream)
                     using (var reader = new StreamReader(stream, encoding))
@@ -420,7 +420,7 @@ namespace HttpMockPlayer
 
                 if (response.ContentLength != 0)
                 {
-                    var encoding = Encoding.GetEncoding(response.CharacterSet ?? "utf-8");
+                    var encoding = GetEncoding(response.CharacterSet);
 
                     using (var stream = response.GetResponseStream())
                     using (var reader = new StreamReader(stream, encoding))
@@ -544,7 +544,7 @@ namespace HttpMockPlayer
             if (mockRequest.Content != null)
             {
                 var contentType = new ContentType(mockRequest.Headers?.Get("Content-Type") ?? "text/plain; charset=utf-8");
-                var encoding = Encoding.GetEncoding(contentType.CharSet ?? "utf-8");
+                var encoding = GetEncoding(contentType.CharSet);
                 var content = encoding.GetBytes(mockRequest.Content);
 
                 if (mockRequest.Headers?.Get("Content-Length") != null)
@@ -559,6 +559,13 @@ namespace HttpMockPlayer
             }
 
             return request;
+        }
+
+        private static Encoding GetEncoding(string charSet)
+        {
+            return Encoding.GetEncoding(string.IsNullOrEmpty(charSet) 
+                ? "utf-8" 
+                : charSet);
         }
 
         private void BuildResponse(HttpListenerResponse response, MockResponse mockResponse)
@@ -600,7 +607,7 @@ namespace HttpMockPlayer
             if (mockResponse.Content != null)
             {
                 var contentType = new ContentType(mockResponse.Headers?.Get("Content-Type") ?? "text/plain; charset=utf-8");
-                var encoding = Encoding.GetEncoding(contentType.CharSet ?? "utf-8");
+                var encoding = GetEncoding(contentType.CharSet);
                 var content = encoding.GetBytes(mockResponse.Content);
 
                 if(mockResponse.Headers?.Get("Content-Length") != null)
