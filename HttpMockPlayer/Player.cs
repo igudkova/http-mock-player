@@ -494,6 +494,7 @@ namespace HttpMockPlayer
                             }
                             break;
                         case "Content-Length":
+                            request.ContentLength = long.Parse(value);
                             break;
                         case "Content-Type":
                             request.ContentType = value;
