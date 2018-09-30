@@ -19,9 +19,9 @@ namespace HttpMockPlayer.Tests
 
         Player player;
 
-        Cassette cassette1 = new Cassette(Context.Cassette1);
-        Cassette cassette2 = new Cassette(Context.Cassette2);
-        Cassette cassette3 = new Cassette(Context.Cassette3);
+        Cassette cassette1 = new Cassette(Context.CreateCassette("cassette1"));
+        Cassette cassette2 = new Cassette(Context.CreateCassette("cassette2"));
+        Cassette cassette3 = new Cassette(Context.CreateCassette("cassette3"));
 
         [SetUp]
         public void SetUp()
@@ -421,7 +421,7 @@ namespace HttpMockPlayer.Tests
         public void Recording_RedirectsRequestToRemoteAddress()
         {
             player.Start();
-            player.Load(new Cassette(Context.CassetteNew));
+            player.Load(new Cassette(Context.CreateCassette("new")));
             player.Record("record1");
 
             Action<HttpListenerRequest, HttpListenerResponse> callback = delegate (HttpListenerRequest request, HttpListenerResponse response)
@@ -523,7 +523,7 @@ namespace HttpMockPlayer.Tests
         public void Recording_CanHandleMultipleRemoteAddresses()
         {
             player.Start();
-            player.Load(new Cassette(Context.CassetteNew));
+            player.Load(new Cassette(Context.CreateCassette("new")));
             player.Record("record1");
 
             bool requestProcessed1 = false;
@@ -578,7 +578,7 @@ namespace HttpMockPlayer.Tests
         public void Recording_ResponsesWithRemoteResponse()
         {
             player.Start();
-            player.Load(new Cassette(Context.CassetteNew));
+            player.Load(new Cassette(Context.CreateCassette("new")));
             player.Record("record1");
 
             using (var server = new Server(remoteAddress1))
@@ -626,7 +626,7 @@ namespace HttpMockPlayer.Tests
         public void Recording_WebException_ResponsesWithWebExceptionResponse()
         {
             player.Start();
-            player.Load(new Cassette(Context.CassetteNew));
+            player.Load(new Cassette(Context.CreateCassette("new")));
             player.Record("record1");
 
             Action<HttpListenerRequest, HttpListenerResponse> callback = delegate (HttpListenerRequest request, HttpListenerResponse response)
@@ -651,7 +651,7 @@ namespace HttpMockPlayer.Tests
         public void Recording_Exception_ResponsesWithPlayerError()
         {
             player.Start();
-            player.Load(new Cassette(Context.CassetteNew));
+            player.Load(new Cassette(Context.CreateCassette("new")));
             player.Record("record1");
 
             var client = new Client(baseAddress);
@@ -666,9 +666,35 @@ namespace HttpMockPlayer.Tests
         }
 
         [Test]
+        public void Recording_PostEmptyContent_ContentLengthHeaderSaved()
+        {
+            var cassette = new Cassette(Context.CreateCassette("new"));
+
+            player.Start();
+            player.Load(cassette);
+            player.Record("record1");
+
+            using (var server = new Server(remoteAddress1))
+            {
+                Task.Run(() => server.Accept());
+
+                var client = new Client(baseAddress);
+                client.Send("/", "POST", headers: new NameValueCollection {{ "Content-Length", "0" }});
+            }
+            player.Stop();
+
+            var record = cassette.Find("record1");
+            var mock = (JObject)record.Read();
+            var jrequest = (JObject)mock["request"];
+
+            Assert.IsNull(jrequest["content"]);
+            Assert.AreEqual("0", jrequest["headers"]["Content-Length"].ToString());
+        }
+
+        [Test]
         public void Recording_EmptyRecord_NotSaved()
         {
-            var path = Context.CassetteNew;
+            var path = Context.CreateCassette("new");
 
             player.Start();
             player.Load(new Cassette(path));
@@ -707,7 +733,7 @@ namespace HttpMockPlayer.Tests
         public void Stop_AfterRecorded_RewindsRecord()
         {
             player.Start();
-            player.Load(new Cassette(Context.CassetteNew));
+            player.Load(new Cassette(Context.CreateCassette("new")));
             player.Record("record1");
 
             using (var server = new Server(remoteAddress1))
@@ -727,7 +753,7 @@ namespace HttpMockPlayer.Tests
         [Test]
         public void Stop_AfterRecorded_SavesRecord()
         {
-            var cassette = new Cassette(Context.CassetteNew);
+            var cassette = new Cassette(Context.CreateCassette("new"));
 
             player.Start();
             player.Load(cassette);
@@ -867,7 +893,7 @@ namespace HttpMockPlayer.Tests
         [Test]
         public void Close_AfterRecorded_RewindsRecord()
         {
-            var cassette = new Cassette(Context.CassetteNew);
+            var cassette = new Cassette(Context.CreateCassette("new"));
 
             player.Start();
             player.Load(cassette);

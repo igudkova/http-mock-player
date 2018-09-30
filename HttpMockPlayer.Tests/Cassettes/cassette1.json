@@ -38,13 +38,11 @@
         "response": {
           "statusCode": 404,
           "statusDescription": "Not Found",
-          "content": {
-            "message": "Ange meddelande för sidan hittades inte (Fel 404)"
-          },
+          "content": "{\"message\": \"Ange meddelande för sidan hittades inte (Fel 404)\"}",
           "headers": {
             "Status": "404 Not Found",
             "X-Request-Id": "request2_record1_cassette1",
-            "Content-Length": "63",
+            "Content-Length": "66",
             "Content-Type": "application/json; charset=utf-8",
             "Date": "Fri, 20 May 2016 09:13:23 GMT",
             "Server": "localhost"

@@ -12,68 +12,20 @@ namespace HttpMockPlayer.Tests
 
         public static string Path { get; private set; }
 
-        public static string CassetteNew
+        public static string CreateCassette(string name)
         {
-            get
-            {
-                var path = $"{Path}/new.json";
+            var path = $"{Path}/{name}.json";
 
+            if (name == "new")
+            {
                 File.Delete(path);
-
-                return path;
             }
-        }
-
-        public static string Cassette1
-        {
-            get
+            else
             {
-                var src = $"{assemblyDirectoryName}/../../Cassettes/cassette1.json";
-                var dest = $"{Path}/cassette1.json";
-
-                File.Copy(src, dest, true);
-
-                return dest;
+                File.Copy($"{assemblyDirectoryName}/../../Cassettes/{name}.json", path, true);
             }
-        }
 
-        public static string Cassette2
-        {
-            get
-            {
-                var src = $"{assemblyDirectoryName}/../../Cassettes/cassette2.json";
-                var dest = $"{Path}/cassette2.json";
-
-                File.Copy(src, dest, true);
-
-                return dest;
-            }
-        }
-
-        public static string Cassette3
-        {
-            get
-            {
-                var src = $"{assemblyDirectoryName}/../../Cassettes/cassette3.json";
-                var dest = $"{Path}/cassette3.json";
-
-                File.Copy(src, dest, true);
-
-                return dest;
-            }
-        }
-
-        public static string Cassette4
-        {
-            get
-            {
-                var src = $"{assemblyDirectoryName}/../../Cassettes/cassette4.json";
-                var dest = $"{Path}/cassette4.json";
-
-                File.Copy(src, dest, true);
-
-                return dest;
-            }
+            return path;
         }
 
         [OneTimeSetUp]
