@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Collections.Specialized;
 using System.Runtime.CompilerServices;
 using System.Linq;
-using System.Dynamic;
 using System.Net.Mime;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -82,12 +81,7 @@ namespace HttpMockPlayer
             }
             set
             {
-                if (value == null)
-                {
-                    throw new ArgumentNullException("value");
-                }
-
-                remoteAddress = value;
+                remoteAddress = value ?? throw new ArgumentNullException("value");
             }
         }
 
@@ -127,15 +121,7 @@ namespace HttpMockPlayer
 
                 if (Content != null)
                 {
-                    try
-                    {
-                        var jcontent = JToken.Parse(Content);
-                        jrequest.Add("content", jcontent);
-                    }
-                    catch (JsonReaderException)
-                    {
-                        jrequest.Add("content", Content);
-                    }
+                    jrequest.Add("content", Content);
                 }
 
                 if (Headers != null)
@@ -202,17 +188,7 @@ namespace HttpMockPlayer
                     using (var stream = request.InputStream)
                     using (var reader = new StreamReader(stream, encoding))
                     {
-                        var content = reader.ReadToEnd();
-
-                        try
-                        {
-                            var jcontent = JToken.Parse(content);
-                            mockRequest.Content = JsonConvert.SerializeObject(jcontent);
-                        }
-                        catch (JsonReaderException)
-                        {
-                            mockRequest.Content = content;
-                        }
+                        mockRequest.Content = reader.ReadToEnd();
                     }
                 }
 
@@ -351,15 +327,7 @@ namespace HttpMockPlayer
 
                 if (Content != null)
                 {
-                    try
-                    {
-                        var jcontent = JToken.Parse(Content);
-                        jresponse.Add("content", jcontent);
-                    }
-                    catch (JsonReaderException)
-                    {
-                        jresponse.Add("content", Content);
-                    }
+                    jresponse.Add("content", Content);
                 }
 
                 if (Headers != null)
@@ -385,17 +353,7 @@ namespace HttpMockPlayer
 
                 if (jresponse["content"] != null)
                 {
-                    var content = jresponse["content"].ToString();
-
-                    try
-                    {
-                        var jcontent = JToken.Parse(content);
-                        mockResponse.Content = JsonConvert.SerializeObject(jcontent);
-                    }
-                    catch (JsonReaderException)
-                    {
-                        mockResponse.Content = content;
-                    }
+                    mockResponse.Content = jresponse["content"].ToString();
                 }
 
                 if (jresponse["headers"] != null)
@@ -425,17 +383,7 @@ namespace HttpMockPlayer
                     using (var stream = response.GetResponseStream())
                     using (var reader = new StreamReader(stream, encoding))
                     {
-                        var content = reader.ReadToEnd();
-
-                        try
-                        {
-                            var jcontent = JToken.Parse(content);
-                            mockResponse.Content = JsonConvert.SerializeObject(jcontent);
-                        }
-                        catch (JsonReaderException)
-                        {
-                            mockResponse.Content = content;
-                        }
+                        mockResponse.Content = reader.ReadToEnd();
                     }
                 }
 
@@ -548,11 +496,6 @@ namespace HttpMockPlayer
                 var encoding = GetEncoding(contentType.CharSet);
                 var content = encoding.GetBytes(mockRequest.Content);
 
-                if (mockRequest.Headers?.Get("Content-Length") != null)
-                {
-                    request.ContentLength = content.Length;
-                }
-
                 using (var stream = request.GetRequestStream())
                 {
                     stream.Write(content, 0, content.Length);
@@ -588,6 +531,7 @@ namespace HttpMockPlayer
                             response.KeepAlive = (value.ToLower() == "keep-alive");
                             break;
                         case "Content-Length":
+                            response.ContentLength64 = long.Parse(value);
                             break;
                         case "Content-Type":
                             response.ContentType = value;
@@ -610,11 +554,6 @@ namespace HttpMockPlayer
                 var contentType = new ContentType(mockResponse.Headers?.Get("Content-Type") ?? "text/plain; charset=utf-8");
                 var encoding = GetEncoding(contentType.CharSet);
                 var content = encoding.GetBytes(mockResponse.Content);
-
-                if(mockResponse.Headers?.Get("Content-Length") != null)
-                {
-                    response.ContentLength64 = content.Length;
-                }
 
                 using (var stream = response.OutputStream)
                 {
