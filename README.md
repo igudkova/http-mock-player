@@ -97,10 +97,8 @@ Once run, this code generates a JSON file (`api-calls.json` as specified in the 
         "response": {
           "statusCode": 200,
           "statusDescription": "OK",
-          "content": {
-            "id": "a77a6649-1d41-4d80-a763-494640b99a4b",
-            "items": []
-          },
+          "content": "{\"id\":\"a77a6649-1d41-4d80-a763-494640b99a4b\",
+          \"items\":[]}",
           "headers": {
             "Status": "200 OK",
             "X-Served-By": "a123456f3b2fa272558fa6dc951018ad",
@@ -122,10 +120,8 @@ Once run, this code generates a JSON file (`api-calls.json` as specified in the 
       "request": {
         "method": "POST",
         "uri": "https://api.myserver.com/stuff",
-        "content": {
-          "id": "186b0d73-4ab6-4726-a963-85996944b6b4",
-          "items": []
-        },
+        "content": "{\"id\":\"186b0d73-4ab6-4726-a963-85996944b6b4\",
+        \"items\":[]}",
           "headers": {
             "Content-Length": "56",
             "Content-Type": "application/json; charset=utf-8",
@@ -137,9 +133,7 @@ Once run, this code generates a JSON file (`api-calls.json` as specified in the 
         "response": {
           "statusCode": 401,
           "statusDescription": "Unauthorized",
-          "content": {
-            "message": "Requires authentication",
-          },
+          "content": "{\"message\":\"Requires authentication\"}",
           "headers": {
             "Status": "401 Unauthorized",
             "Content-Length": "37",
@@ -188,10 +182,12 @@ player.Close();
 A HTTP request is recorded as JSON object which stores its HTTP method, resource URI, body data and headers:
 ```javascript
 "request": {
-  "method": "GET",
-  "uri": "https://api.github.com/repos/igudkova/http-mock-player",
+  "method": "POST",
+  "uri": "https://api.test.com/entities/1",
+  "content": "entity1",
   "headers": {
     "Connection": "Keep-Alive",
+    "Content-Length": "7",
     "Cookie": "cookie1=value1; cookie2=value2",
     "Host": "api.github.com",
     "User-Agent": "SampleGithubClient/1.0"
