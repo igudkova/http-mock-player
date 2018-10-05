@@ -39,17 +39,8 @@ namespace HttpMockPlayer
         /// <exception cref="ArgumentNullException"/>
         public Player(Uri baseAddress, Uri remoteAddress)
         {
-            if (baseAddress == null)
-            {
-                throw new ArgumentNullException("baseAddress");
-            }
-            if (remoteAddress == null)
-            {
-                throw new ArgumentNullException("remoteAddress");
-            }
-
-            this.baseAddress = baseAddress;
-            this.remoteAddress = remoteAddress;
+            this.baseAddress = baseAddress ?? throw new ArgumentNullException("baseAddress");
+            this.remoteAddress = remoteAddress ?? throw new ArgumentNullException("remoteAddress");
 
             var baseAddressString = baseAddress.OriginalString;
             httpListener = new HttpListener();
@@ -147,17 +138,7 @@ namespace HttpMockPlayer
 
                 if (jrequest["content"] != null)
                 {
-                    var content = jrequest["content"].ToString();
-
-                    try
-                    {
-                        var jcontent = JToken.Parse(content);
-                        mockRequest.Content = JsonConvert.SerializeObject(jcontent);
-                    }
-                    catch (JsonReaderException)
-                    {
-                        mockRequest.Content = content;
-                    }
+                    mockRequest.Content = jrequest["content"].ToString();
                 }
 
                 if (jrequest["headers"] != null)
@@ -378,14 +359,27 @@ namespace HttpMockPlayer
 
                 if (response.ContentLength != 0)
                 {
-                    var encoding = GetEncoding(response.CharacterSet);
-
-                    using (var stream = response.GetResponseStream())
-                    using (var reader = new StreamReader(stream, encoding))
+                    using (BinaryReader reader = new BinaryReader(response.GetResponseStream()))
                     {
-                        mockResponse.Content = reader.ReadToEnd();
+                        //if (response.ContentType == )
+                        Byte[] lnByte = reader.ReadBytes((int)response.ContentLength);
+                        mockResponse.Content = Convert.ToBase64String(lnByte, 0, lnByte.Length);
+                        //using (FileStream lxFS = new FileStream("34891.jpg", FileMode.Create))
+                        //{
+                        //    lxFS.Write(lnByte, 0, lnByte.Length);
+                        //}
                     }
                 }
+
+
+                    //var encoding = GetEncoding(response.CharacterSet);
+
+                    //using (var stream = response.GetResponseStream())
+                    //using (var reader = new StreamReader(stream, true))
+                    //{
+                    //    mockResponse.Content = reader.ReadToEnd();
+                    //}
+                //}
 
                 if(response.Headers != null && response.Headers.Count > 0)
                 {
@@ -507,8 +501,8 @@ namespace HttpMockPlayer
 
         private static Encoding GetEncoding(string charSet)
         {
-            return Encoding.GetEncoding(string.IsNullOrEmpty(charSet) 
-                ? "utf-8" 
+            return Encoding.GetEncoding(string.IsNullOrEmpty(charSet)
+                ? "utf-8"
                 : charSet);
         }
 
@@ -549,16 +543,32 @@ namespace HttpMockPlayer
                 }
             }
 
+            //response.ContentLength64 = mockResponse.Content != null ? mockResponse.Content.Length : 0;
+            //response.OutputStream..WriteTimeout = 10000;
+            //response.OutputStream.Seek(0, SeekOrigin.Begin);//.Close();
+
             if (mockResponse.Content != null)
             {
-                var contentType = new ContentType(mockResponse.Headers?.Get("Content-Type") ?? "text/plain; charset=utf-8");
-                var encoding = GetEncoding(contentType.CharSet);
-                var content = encoding.GetBytes(mockResponse.Content);
+                var content = Convert.FromBase64String(mockResponse.Content);
 
-                using (var stream = response.OutputStream)
+
+                //var contentType = new ContentType(mockResponse.Headers?.Get("Content-Type") ?? "text/plain; charset=utf-8");
+                //var encoding = GetEncoding(contentType.CharSet);
+                //var content = encoding.GetBytes(mockResponse.Content);
+
+                using (MemoryStream ms = new MemoryStream())
                 {
-                    stream.Write(content, 0, content.Length);
+                    ms.Write(content, 0, content.Length);
+                    //response.ContentLength64 = ms.Length;
+                    ms.WriteTo(response.OutputStream);
+                    //outputStream.Flush();
+                    //outputStream.Close();
                 }
+
+                //using (var stream = response.OutputStream)
+                //{
+                //    response.OutputStream.Write(content, 0, content.Length);
+                //}
             }
         }
 
