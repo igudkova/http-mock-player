@@ -21,14 +21,15 @@ namespace HttpMockPlayer
     /// </summary>
     public class Player
     {
-        private Uri baseAddress, remoteAddress;
+        private readonly Uri baseAddress;
+        private Uri remoteAddress;
         private HttpListener httpListener;
         private Cassette cassette;
         private Record record;
 
         // mutex object, used to avoid collisions when processing 
         // an incoming request or updating the player state value
-        private object statelock;
+        private readonly object statelock;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Player"/> class with base and remote address URI's.
@@ -55,7 +56,7 @@ namespace HttpMockPlayer
         {
             get
             {
-                return baseAddress;
+                return BaseAddress1;
             }
         }
 
@@ -124,10 +125,11 @@ namespace HttpMockPlayer
 
             internal JObject ToJson()
             {
-                var jrequest = new JObject();
-
-                jrequest.Add("method", Method);
-                jrequest.Add("uri", Uri);
+                var jrequest = new JObject
+                {
+                    { "method", Method },
+                    { "uri", Uri }
+                };
 
                 if (Content != null)
                 {
@@ -278,7 +280,7 @@ namespace HttpMockPlayer
 
             public override bool Equals(object obj)
             {
-                if (ReferenceEquals(null, obj))
+                if (obj is null)
                 {
                     return false;
                 }
@@ -298,7 +300,7 @@ namespace HttpMockPlayer
 
             public bool Equals(MockRequest mockRequest)
             {
-                if (ReferenceEquals(null, mockRequest))
+                if (mockRequest is null)
                 {
                     return false;
                 }
@@ -331,10 +333,11 @@ namespace HttpMockPlayer
 
             internal JObject ToJson()
             {
-                var jresponse = new JObject();
-
-                jresponse.Add("statusCode", StatusCode);
-                jresponse.Add("statusDescription", StatusDescription);
+                var jresponse = new JObject
+                {
+                    { "statusCode", StatusCode },
+                    { "statusDescription", StatusDescription }
+                };
 
                 if (Content != null)
                 {

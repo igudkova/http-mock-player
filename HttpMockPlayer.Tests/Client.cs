@@ -7,7 +7,7 @@ namespace HttpMockPlayer.Tests
 {
     public class Client
     {
-        private Uri baseAddress;
+        private readonly Uri baseAddress;
 
         public Client(Uri baseAddress)
         {
