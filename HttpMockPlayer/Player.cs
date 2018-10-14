@@ -56,7 +56,7 @@ namespace HttpMockPlayer
         {
             get
             {
-                return BaseAddress1;
+                return baseAddress;
             }
         }
 
