@@ -93,12 +93,7 @@ namespace HttpMockPlayer
         /// <exception cref="CassetteException"/>
         public Cassette(string path)
         {
-            if (path == null)
-            {
-                throw new ArgumentNullException("path");
-            }
-
-            this.Path = path;
+            this.Path = path ?? throw new ArgumentNullException("path");
             this.Records = new List<Record>();
 
             try

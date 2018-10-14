@@ -7,14 +7,40 @@ namespace HttpMockPlayer.Tests
 {
     public class Client
     {
-        private Uri baseAddress;
+        private readonly Uri baseAddress;
 
         public Client(Uri baseAddress)
         {
             this.baseAddress = baseAddress;
         }
 
-        public WebResponse Send(string path, string method, string content = null, NameValueCollection headers = null, CookieCollection cookies = null)
+        public WebResponse Send(string path, string method, NameValueCollection headers = null, CookieCollection cookies = null)
+        {
+            return CreateRequest(path, method, headers, cookies).GetResponse();
+        }
+
+        public WebResponse Send(string path, string method, string content, NameValueCollection headers = null, CookieCollection cookies = null)
+        {
+            var request = CreateRequest(path, method, headers, cookies);
+
+            return Send(path, method, Encoding.UTF8.GetBytes(content), headers, cookies);
+        }
+
+        public WebResponse Send(string path, string method, byte[] content, NameValueCollection headers = null, CookieCollection cookies = null)
+        {
+            var request = CreateRequest(path, method, headers, cookies);
+
+            request.ContentLength = content.Length;
+
+            using (var stream = request.GetRequestStream())
+            {
+                stream.Write(content, 0, content.Length);
+            }
+
+            return request.GetResponse();
+        }
+
+        private HttpWebRequest CreateRequest(string path, string method, NameValueCollection headers = null, CookieCollection cookies = null)
         {
             var request = WebRequest.CreateHttp(new Uri(baseAddress, path));
             request.Method = method;
@@ -94,19 +120,7 @@ namespace HttpMockPlayer.Tests
                 request.CookieContainer.Add(cookies);
             }
 
-            if (content != null)
-            {
-                var data = Encoding.UTF8.GetBytes(content);
-
-                request.ContentLength = data.Length;
-
-                using (var stream = request.GetRequestStream())
-                {
-                    stream.Write(data, 0, data.Length);
-                }
-           }
-
-            return request.GetResponse();
+            return request;
         }
     }
 }

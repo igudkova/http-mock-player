@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Net.Sockets;
 using System.Net;
 using System.Collections.Specialized;
@@ -7,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Newtonsoft.Json.Linq;
+using System.Drawing.Imaging;
 
 namespace HttpMockPlayer.Tests
 {
@@ -689,6 +691,75 @@ namespace HttpMockPlayer.Tests
 
             Assert.IsNull(jrequest["content"]);
             Assert.AreEqual("0", jrequest["headers"]["Content-Length"].ToString());
+        }
+
+        [Test]
+        public void Recording_HandlesBinaryContent()
+        {
+            long requestContentLength = 0, responseContentLength = 0;
+
+            var cassette = new Cassette(Context.CreateCassette("new"));
+
+            player.Start();
+            player.Load(cassette);
+            player.Record("record1");
+
+            Action<HttpListenerRequest, HttpListenerResponse> callback = delegate (HttpListenerRequest request, HttpListenerResponse response)
+            {
+                response.StatusCode = 200;
+                response.StatusDescription = "Get your file";
+
+                response.KeepAlive = false;
+                response.ContentType = "image/gif; charset=ascii";
+
+                using (var bitmap = new Bitmap(40, 50))
+                using (var stream = new MemoryStream())
+                {
+                    bitmap.Save(stream, ImageFormat.Gif);
+
+                    var content = stream.ToArray();
+                    responseContentLength = response.ContentLength64 = content.Length;
+
+                    response.OutputStream.Write(content, 0, content.Length);
+                }
+            };
+
+            using (var server = new Server(remoteAddress1))
+            {
+                Task.Run(() => server.Accept(callback));
+
+                var client = new Client(baseAddress);
+
+                var headers = new NameValueCollection
+                {
+                    { "Connection", "Keep-Alive" },
+                    { "Content-Type", "image/png" },
+                    { "Date", "Sat, 13 Oct 2018 18:12:00 GMT" },
+                    { "User-Agent", "test client" },
+                    { "Cache-Control", "no - cache" }
+                };
+
+                using (var bitmap = new Bitmap(10, 20))
+                using (var stream = new MemoryStream())
+                {
+                    bitmap.Save(stream, ImageFormat.Png);
+
+                    requestContentLength = stream.Length;
+
+                    client.Send("/path", "POST", stream.ToArray(), headers);
+                }
+            }
+
+            player.Stop();
+
+            var record = cassette.Find("record1");
+            var mock = (JObject)record.Read();
+            var jrequest = (JObject)mock["request"];
+            var jresponse = (JObject)mock["response"];
+
+            Assert.AreEqual(requestContentLength, (int)jrequest["headers"]["Content-Length"]);
+            Assert.AreEqual(200, (int)jresponse["statusCode"]);
+            Assert.AreEqual(responseContentLength, (int)jresponse["headers"]["Content-Length"]);
         }
 
         [Test]
