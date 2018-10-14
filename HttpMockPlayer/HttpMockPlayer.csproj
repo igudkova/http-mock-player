@@ -17,6 +17,9 @@
         <Company />
         <Product>HTTP Mock Player</Product>        
     </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|AnyCPU'">
+      <DocumentationFile>bin\Release\netstandard2.0\HttpMockPlayer.xml</DocumentationFile>
+    </PropertyGroup>
     <ItemGroup>
       <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     </ItemGroup>    
