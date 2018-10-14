@@ -9,7 +9,7 @@ The library implements recorder and player of HTTP requests. When recording, a r
 PM> Install-Package HttpMockPlayer
 ``` 
 ## Supported .NET versions
-The least supported .NET version is 4.5.
+The library is built on top of .NET Standard 2.0.
 
 ## Usage
 The following example uses [NUnit testing framework][nunit] together with the HttpMockPlayer library to test a remote API:
