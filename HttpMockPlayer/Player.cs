@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -6,6 +7,7 @@ using System.Threading.Tasks;
 using System.Collections.Specialized;
 using System.Runtime.CompilerServices;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net.Mime;
 using Newtonsoft.Json.Linq;
 
@@ -218,22 +220,16 @@ namespace HttpMockPlayer
                 return mockRequest;
             }
 
-            private bool IsEqual(MockRequest mockRequest)
+            internal IEnumerable<(string Property, object ThisValue, object OtherValue)> GetDifferences(MockRequest mockRequest)
             {
-                if (!string.Equals(Method, mockRequest.Method))
-                {
-                    return false;
-                }
+                var methodComparison = CompareStringProperty(p => p.Method, mockRequest);
+                if (methodComparison.HasValue) yield return methodComparison.Value;
 
-                if(!string.Equals(Uri, mockRequest.Uri))
-                {
-                    return false;
-                }
+                var uriComparison = CompareStringProperty(p => p.Uri, mockRequest);
+                if (uriComparison.HasValue) yield return uriComparison.Value;
 
-                if(!string.Equals(Content, mockRequest.Content))
-                {
-                    return false;
-                }
+                var contentComparison = CompareStringProperty(p => p.Content, mockRequest);
+                if (contentComparison.HasValue) yield return contentComparison.Value;
 
                 NameValueCollection headers = null;
 
@@ -258,59 +254,57 @@ namespace HttpMockPlayer
 
                 if((headers == null) != (mockRequest.Headers == null))
                 {
-                    return false;
+                    yield return ("Headers", headers, mockRequest.Headers);
                 }
                 if (headers != null)
                 {
                     if (headers.Count != mockRequest.Headers.Count)
                     {
-                        return false;
+                        yield return ("Headers.Count", headers.Count, mockRequest.Headers.Count);
                     }
                     foreach (string header in headers)
                     {
                         if (!string.Equals(headers[header], mockRequest.Headers[header]))
                         {
-                            return false;
+                            yield return ("Headers." + header, headers[header], mockRequest.Headers[header]);
                         }
                     }
                 }
-
-                return true;
             }
 
-            public override bool Equals(object obj)
+            private (string Property, object ThisValue, object OtherValue)? CompareStringProperty(Expression<Func<MockRequest, string>> propertyGetter, MockRequest mockRequest)
             {
-                if (obj is null)
+                var thisValue = propertyGetter.Compile()(this);
+                var otherValue = propertyGetter.Compile()(mockRequest);
+                if (!string.Equals(thisValue, otherValue))
                 {
-                    return false;
+                    if (thisValue != null && otherValue != null)
+                    {
+                        var diffIndex = GetDiffIndex(thisValue, otherValue);
+                        var startPosition = Math.Max(diffIndex - 10, 0);
+                        thisValue = ExtractStringContent(thisValue, startPosition);
+                        otherValue = ExtractStringContent(otherValue, startPosition);
+                    }
+
+                    var fieldExpression = (MemberExpression) propertyGetter.Body;
+                    return (fieldExpression.Member.Name, thisValue, otherValue);
                 }
 
-                if (ReferenceEquals(this, obj))
-                {
-                    return true;
-                }
-
-                if (GetType() != obj.GetType())
-                {
-                    return false;
-                }
-
-                return IsEqual((MockRequest)obj);
+                return null;
             }
 
-            public bool Equals(MockRequest mockRequest)
+            private static string ExtractStringContent(string thisValue, int startPosition)
             {
-                if (mockRequest is null)
-                {
-                    return false;
-                }
+                if (thisValue.Length > startPosition + 100)
+                    return "..." + thisValue.Substring(startPosition, 100) + "...";
+                return thisValue;
+            }
 
-                if (ReferenceEquals(this, mockRequest))
-                {
-                    return true;
-                }
+            private int GetDiffIndex(string thisValue, string otherValue)
+            {
+                if (thisValue == null || otherValue == null) return 0;
 
-                return IsEqual(mockRequest);
+                return thisValue.Zip(otherValue, (c1, c2) => c1 == c2).TakeWhile(b => b).Count();
             }
 
             public override int GetHashCode()
@@ -657,13 +651,20 @@ namespace HttpMockPlayer
 
                                             MockResponse mockResponse;
 
-                                            if (mockRequest.Equals(mockPlayerRequest))
+                                            var differences = mockRequest.GetDifferences(mockPlayerRequest).ToArray();
+                                            if (differences.Length == 0)
                                             {
                                                 mockResponse = MockResponse.FromJson((JObject)mock["response"]);
                                             }
                                             else
                                             {
-                                                mockResponse = MockResponse.FromPlayerError(PlayerErrorCode.RequestNotFound, "Player request mismatch", $"Player could not play the request at {playerRequest.Url.PathAndQuery}. The request doesn't match the current recorded one.");
+                                                var differencesMessage = string.Join(", ",
+                                                    differences.Select(d =>
+                                                        $"{d.Property} (Recorded={d.ThisValue}, Requested={d.OtherValue}"));
+                                                var message =
+                                                    $"Player could not play the request at {playerRequest.Url.PathAndQuery}. " +
+                                                    $"The request doesn't match the current recorded one: {differencesMessage}";
+                                                mockResponse = MockResponse.FromPlayerError(PlayerErrorCode.RequestNotFound, "Player request mismatch", message);
                                             }
 
                                             BuildResponse(playerResponse, mockResponse);
