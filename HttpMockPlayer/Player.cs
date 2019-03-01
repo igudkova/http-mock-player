@@ -660,7 +660,7 @@ namespace HttpMockPlayer
                                             {
                                                 var differencesMessage = string.Join(", ",
                                                     differences.Select(d =>
-                                                        $"{d.Property} (Recorded={d.ThisValue}, Requested={d.OtherValue}"));
+                                                        $"{d.Property} (Recorded='{d.ThisValue}', Requested='{d.OtherValue}')"));
                                                 var message =
                                                     $"Player could not play the request at {playerRequest.Url.PathAndQuery}. " +
                                                     $"The request doesn't match the current recorded one: {differencesMessage}";
