@@ -9,6 +9,8 @@ using System.Runtime.CompilerServices;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Net.Mime;
+using System.Xml;
+using System.Xml.Linq;
 using Newtonsoft.Json.Linq;
 
 // Signed assemblies cannot build on Travis, because the key file is not committed.
@@ -228,6 +230,11 @@ namespace HttpMockPlayer
                 var uriComparison = CompareStringProperty(p => p.Uri, mockRequest);
                 if (uriComparison.HasValue) yield return uriComparison.Value;
 
+                if (Headers["Content-Type"] == "application/xml")
+                {
+                    Content = NormalizeXml(Content);
+                    mockRequest.Content = NormalizeXml(mockRequest.Content);
+                }
                 var contentComparison = CompareStringProperty(p => p.Content, mockRequest);
                 if (contentComparison.HasValue) yield return contentComparison.Value;
 
@@ -270,6 +277,20 @@ namespace HttpMockPlayer
                         }
                     }
                 }
+            }
+
+            private static string NormalizeXml(string content)
+            {
+                var xml = XElement.Parse(content);
+
+                // CG: Namespace declarations may be sorted differently, ignore them
+                // https://stackoverflow.com/questions/20701750/c-sharp-xml-serialization-order-of-namespace-declarations
+                foreach (var attr in xml.Attributes().Where(a => a.IsNamespaceDeclaration).ToArray())
+                {
+                    attr.Remove();
+                }
+
+                return xml.ToString();
             }
 
             private (string Property, object ThisValue, object OtherValue)? CompareStringProperty(Expression<Func<MockRequest, string>> propertyGetter, MockRequest mockRequest)
