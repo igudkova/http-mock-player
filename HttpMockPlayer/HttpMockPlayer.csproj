@@ -21,6 +21,6 @@
       <DocumentationFile>bin\Release\netstandard2.0\HttpMockPlayer.xml</DocumentationFile>
     </PropertyGroup>
     <ItemGroup>
-      <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
     </ItemGroup>    
 </Project>
